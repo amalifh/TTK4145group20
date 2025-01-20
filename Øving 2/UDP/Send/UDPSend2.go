@@ -14,7 +14,7 @@ func UDPsend() {
 }
 
 func UDPreceive() {
-	udpAddr, err := net.ResolveUDPAddr("udp", ":30000")
+	udpAddr, err := net.ResolveUDPAddr("udp", "10.100.23.204:20020:20020")
 	if err != nil {
 		fmt.Println(err)
 		return
