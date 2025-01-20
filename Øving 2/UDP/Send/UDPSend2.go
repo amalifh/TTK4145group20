@@ -7,16 +7,17 @@ import (
 )
 
 func UDPsend() {
-	addr, _ := net.ResolveUDPAddr("udp", "10.100.23.204:20020")
+	addr, _ := net.ResolveUDPAddr("udp", "10.100.23.204:20022")
+	//fmt.Println("UDPSend debug")
 	conn, _ := net.DialUDP("udp", nil, addr)
-	conn.Write([]byte("Hello from spot 22"))
+	conn.Write([]byte("It's working!"))
 	time.Sleep(1500 * time.Millisecond)
 }
 
 func UDPreceive() {
-	udpAddr, err := net.ResolveUDPAddr("udp", "10.100.23.204:20020:20020")
+	udpAddr, err := net.ResolveUDPAddr("udp", ":20022")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(err)2
 		return
 	}
 	fmt.Println(1)
