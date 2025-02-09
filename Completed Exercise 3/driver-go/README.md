@@ -12,11 +12,18 @@ replace Driver-go => ./Driver-go
 ```
 Where `./Driver-go` is the relative path to this folder, after you have downloaded it.
 
-
-
-
-
-
-
-
-
+Following the structure of the packages:
+/driver-go
+│── /driver  
+│   │── elevator_io.go               
+│── /elevator               
+│   │── types.go            
+│── /fsm                    
+│   │── fsm.go              
+│── /requests               
+│   │── requests.go         
+│── /timer                 
+│   │── timer.go            
+│── main.go                 
+│── go.mod                  
+│── README.md               
