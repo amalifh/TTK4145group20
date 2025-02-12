@@ -9,23 +9,20 @@ import (
 )
 
 func Primary(lastValue int) {
-	fmt.Println("Primary initializing")
 	ln, _ := net.Listen("tcp", ":20022")
 	//exec.Command("gnome-terminal", "--", "go", "run", "main.go").Run()            // Linux
 	exec.Command("cmd", "/C", "start", "powershell", "go", "run", "main.go").Run() // Windows
-	fmt.Println("Primary listening")
 	conn, _ := ln.Accept()
-	fmt.Println("Primary connected")
+	fmt.Println("[Primary initialized]")
 
 	var str string
 	for {
 		lastValue++
 		str = strconv.Itoa(int(lastValue))
 		data := []byte(str)
-		conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		if _, err := conn.Write(data); err != nil {
 			fmt.Println(lastValue)
-			fmt.Println("Error writing. Reinitializing Primary")
+			fmt.Println("[Error writing. Reinitializing Primary]")
 			conn.Close()
 			ln.Close()
 			Primary(lastValue)
@@ -37,23 +34,20 @@ func Primary(lastValue int) {
 }
 
 func Backup() int {
-	fmt.Println("Backup initializing")
 	addr, _ := net.ResolveTCPAddr("tcp", "localhost:20022")
-	fmt.Println("Backup resolved")
 	conn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
-		fmt.Println("Error dialing")
+		fmt.Println("[Error dialing]")
 		return 0
 	}
-	fmt.Println("Backup dialed")
+	fmt.Println("[Backup initialized]")
 
 	var num int
 	for {
 		buf := make([]byte, 1024)
-		conn.SetReadDeadline(time.Now().Add(4 * time.Second))
 		value, err := conn.Read(buf)
 		if err != nil {
-			fmt.Println("Sending num:", num)
+			fmt.Println("[Sending num:", num, "]")
 			conn.Close()
 			return num
 		} else {
@@ -66,10 +60,7 @@ func Backup() int {
 }
 
 func main() {
-	// var wg sync.WaitGroup
 	lastValue := 0
-	// wg.Add(1)
 	lastValue = Backup()
 	Primary(lastValue)
-	// wg.Wait()
 }
