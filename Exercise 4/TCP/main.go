@@ -5,7 +5,6 @@ import (
 	"net"
 	"os/exec"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -23,9 +22,17 @@ func Primary(lastValue int) {
 		lastValue++
 		str = strconv.Itoa(int(lastValue))
 		data := []byte(str)
-		conn.Write(data)
+		conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		if _, err := conn.Write(data); err != nil {
+			fmt.Println(lastValue)
+			fmt.Println("Error writing. Reinitializing Primary")
+			conn.Close()
+			ln.Close()
+			Primary(lastValue)
+			continue
+		}
 		fmt.Println(lastValue)
-		time.Sleep(1500 * time.Millisecond)
+		time.Sleep(2000 * time.Millisecond)
 	}
 }
 
@@ -43,6 +50,7 @@ func Backup() int {
 	var num int
 	for {
 		buf := make([]byte, 1024)
+		conn.SetReadDeadline(time.Now().Add(4 * time.Second))
 		value, err := conn.Read(buf)
 		if err != nil {
 			fmt.Println("Sending num:", num)
@@ -58,10 +66,10 @@ func Backup() int {
 }
 
 func main() {
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 	lastValue := 0
-	wg.Add(1)
+	// wg.Add(1)
 	lastValue = Backup()
 	Primary(lastValue)
-	wg.Wait()
+	// wg.Wait()
 }
