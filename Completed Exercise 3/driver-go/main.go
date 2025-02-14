@@ -46,12 +46,10 @@ func main() {
 
 		// Handle obstruction events
 		case a := <-drv_obstr:
-			if a {
-				// Print the obstruction event if it occurred
-				fmt.Printf("%+v\n", a)
-				// Process the obstruction event in the FSM
-				fsm.FsmOnObstruction(a)
-			}
+			// Print the obstruction event if it occurred
+			fmt.Printf("%+v\n", a)
+			// Process the obstruction event in the FSM
+			fsm.FsmOnObstruction(a)
 
 		// Handle stop button press events
 		case a := <-drv_stop:
