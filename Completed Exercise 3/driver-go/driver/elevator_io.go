@@ -108,11 +108,7 @@ func PollObstructionSwitch(receiver chan<- bool) {
 	for {
 		time.Sleep(_pollRate) // Poll every 25ms
 		v := GetObstruction() // Get the current state of the obstruction switch
-		fmt.Println("This is v:", v)
-		fmt.Println("This is prev:", prev)
-		if v != prev { // If the state changes
-			fmt.Println("This is inside if v:", v)
-			fmt.Println("This is inside if prev:", prev)
+		if v != prev {        // If the state changes
 			receiver <- v // Send the new obstruction state to the receiver channel
 		}
 		prev = v // Update the previous state of the obstruction switch
