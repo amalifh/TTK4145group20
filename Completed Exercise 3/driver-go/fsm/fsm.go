@@ -30,6 +30,9 @@ func FsmOnInitBetweenFloors() {
 func FsmOnRequestButtonPress(btnFloor int, btnType elevator.ButtonType) {
 	switch elevatorState.Behaviour {
 	case elevator.EB_DoorOpen:
+		if elevatorState.ObstructionDetected { // Does nothing if obstruction is detected
+			return
+		}
 		// If the elevator doors are open and a button is pressed, decide whether to start a timer
 		if requests.RequestsShouldClearImmediately(elevatorState, btnFloor, btnType) {
 			timer.TimerStart(elevatorState.Config.DoorOpenDuration_s) // Start door timer
@@ -82,13 +85,6 @@ func FsmOnFloorArrival(newFloor int) {
 			timer.TimerStart(elevatorState.Config.DoorOpenDuration_s)           // Start the door open timer
 			setAllLights(elevatorState)
 			elevatorState.Behaviour = elevator.EB_DoorOpen // Change state to door open
-
-			// If obstruction was detected, wait until the obstruction button is pressed again
-			if elevatorState.ObstructionDetected {
-				for elevatorState.ObstructionDetected {
-					// Wait until obstruction is cleared
-				}
-			}
 		}
 	}
 }
@@ -97,18 +93,17 @@ var savedRequests [elevator.N_FLOORS][elevator.N_BUTTONS]bool
 
 func FsmOnObstruction(obstructed bool) {
 	if obstructed {
-		savedRequests = elevatorState.Requests // Save current requests
+		//savedRequests = elevatorState.Requests // Save current requests
+		elevatorState.ObstructionDetected = true
 		switch elevatorState.Behaviour {
 		case elevator.EB_DoorOpen:
 			driver.SetMotorDirection(elevator.D_Stop)
 			driver.SetDoorOpenLamp(true)
 			setAllLights(elevatorState)
-		case elevator.EB_Moving:
-			elevatorState.ObstructionDetected = true
 		}
 	} else {
 		if elevatorState.ObstructionDetected {
-			elevatorState.Requests = savedRequests // Restore previous requests
+			//elevatorState.Requests = savedRequests // Restore previous requests
 			setAllLights(elevatorState)
 			elevatorState.ObstructionDetected = false
 			p := requests.RequestsChooseDirection(elevatorState)
@@ -127,7 +122,6 @@ func FsmOnObstruction(obstructed bool) {
 func FsmOnStop() {
 	driver.SetMotorDirection(elevator.D_Stop)
 	elevatorState.Dirn = elevator.D_Stop
-
 	// Save current requests before stopping
 	savedRequests = elevatorState.Requests
 
@@ -159,6 +153,9 @@ func FsmOnStopReleased() {
 func FsmOnDoorTimeout() {
 	switch elevatorState.Behaviour {
 	case elevator.EB_DoorOpen:
+		if elevatorState.ObstructionDetected { // Does nothing if obstruction is detected
+			return
+		}
 		// After the door timeout, determine whether to continue moving or remain idle
 		pair := requests.RequestsChooseDirection(elevatorState) // Choose next direction based on requests
 		elevatorState.Dirn = pair.Dirn
