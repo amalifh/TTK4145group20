@@ -28,11 +28,12 @@ func FsmOnInitBetweenFloors() {
 
 // Handle a button press event, updating the elevator state accordingly
 func FsmOnRequestButtonPress(btnFloor int, btnType elevator.ButtonType) {
+	if elevatorState.ObstructionDetected { // Does nothing if obstruction is detected
+		return
+	}
+
 	switch elevatorState.Behaviour {
 	case elevator.EB_DoorOpen:
-		if elevatorState.ObstructionDetected { // Does nothing if obstruction is detected
-			return
-		}
 		// If the elevator doors are open and a button is pressed, decide whether to start a timer
 		if requests.RequestsShouldClearImmediately(elevatorState, btnFloor, btnType) {
 			timer.TimerStart(elevatorState.Config.DoorOpenDuration_s) // Start door timer
