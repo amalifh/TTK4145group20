@@ -107,9 +107,9 @@ func FsmOnObstruction(obstructed bool) {
 			//elevatorState.Requests = savedRequests // Restore previous requests
 			setAllLights(elevatorState)
 			elevatorState.ObstructionDetected = false
-			p := requests.RequestsChooseDirection(elevatorState)
-			elevatorState.Dirn = p.Dirn
-			elevatorState.Behaviour = p.Behaviour
+			//p := requests.RequestsChooseDirection(elevatorState)
+			//elevatorState.Dirn = p.Dirn
+			//elevatorState.Behaviour = p.Behaviour
 			if elevatorState.Behaviour == elevator.EB_Moving {
 				driver.SetMotorDirection(elevatorState.Dirn)
 			} else {
