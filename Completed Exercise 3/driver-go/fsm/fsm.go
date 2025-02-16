@@ -28,7 +28,7 @@ func FsmOnInitBetweenFloors() {
 
 // Handle a button press event, updating the elevator state accordingly
 func FsmOnRequestButtonPress(btnFloor int, btnType elevator.ButtonType) {
-	if elevatorState.ObstructionDetected { // Does nothing if obstruction is detected
+	if elevatorState.ObstructionDetected || elevatorState.StopButtonPressed { // Does nothing if obstruction is detected
 		return
 	}
 
@@ -121,6 +121,22 @@ func FsmOnObstruction(obstructed bool) {
 }
 
 func FsmOnStop() {
+	if !elevatorState.StopButtonPressed {
+		elevatorState.StopButtonPressed = true
+		driver.SetMotorDirection(elevator.D_Stop)
+		driver.SetStopLamp(true)
+	} else {
+		elevatorState.StopButtonPressed = false
+		driver.SetStopLamp(false)
+		if elevatorState.ObstructionDetected {
+			return
+		}
+		driver.SetMotorDirection(elevatorState.Dirn)
+	}
+}
+
+/*
+func FsmOnStop() {
 	driver.SetMotorDirection(elevator.D_Stop)
 	elevatorState.Dirn = elevator.D_Stop
 	// Save current requests before stopping
@@ -149,12 +165,13 @@ func FsmOnStopReleased() {
 		timer.TimerStart(elevatorState.Config.DoorOpenDuration_s)
 	}
 }
+*/
 
 // Handle door timeout, managing transitions based on the elevator's state
 func FsmOnDoorTimeout() {
 	switch elevatorState.Behaviour {
 	case elevator.EB_DoorOpen:
-		if elevatorState.ObstructionDetected { // Does nothing if obstruction is detected
+		if elevatorState.ObstructionDetected || elevatorState.StopButtonPressed { // Does nothing if obstruction is detected
 			return
 		}
 		// After the door timeout, determine whether to continue moving or remain idle
