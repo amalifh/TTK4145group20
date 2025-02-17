@@ -7,11 +7,14 @@ import (
 	"Driver-go/timer"
 	"fmt"
 	"time"
+	"os"
 )
 
 func main() {
 	// Initialize the driver connection to the elevator server
-	driver.Init("localhost:15657", elevator.N_FLOORS)
+	addr := os.Args[1]
+	addr = "localhost:"+addr
+	driver.Init(addr, elevator.N_FLOORS)
 	// Handle the initliazitation in the FSM
 	fsm.FsmOnInitBetweenFloors()
 
