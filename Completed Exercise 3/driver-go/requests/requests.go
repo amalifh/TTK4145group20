@@ -139,17 +139,18 @@ func RequestsClearAtCurrentFloor(e elevator.Elevator) elevator.Elevator {
 		switch e.Dirn {
 		case elevator.D_Up:
 			// If moving up, clear down request if no requests above
-			if !RequestsAbove(e) && e.Requests[e.Floor][elevator.B_HallUp] == false {
+			if !RequestsAbove(e) && !e.Requests[e.Floor][elevator.B_HallUp] {
 				e.Requests[e.Floor][elevator.B_HallDown] = false
 			}
 			e.Requests[e.Floor][elevator.B_HallUp] = false
 		case elevator.D_Down:
 			// If moving down, clear up request if no requests below
-			if !RequestsBelow(e) && e.Requests[e.Floor][elevator.B_HallDown] == false {
+			if !RequestsBelow(e) && !e.Requests[e.Floor][elevator.B_HallDown] {
 				e.Requests[e.Floor][elevator.B_HallUp] = false
 			}
 			e.Requests[e.Floor][elevator.B_HallDown] = false
 		case elevator.D_Stop:
+			fallthrough
 		default:
 			// Clear both up and down requests for all directions
 			e.Requests[e.Floor][elevator.B_HallUp] = false
