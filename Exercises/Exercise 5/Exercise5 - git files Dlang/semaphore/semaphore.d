@@ -12,9 +12,9 @@ Documentation:
 Semaphore:
     https://dlang.org/phobos/core_sync_semaphore.html
     You only need to know:
-        wait()
-        notify()    (same as "signal")
-    (Note that there is no `getValue()` function!)
+        semaphore.wait()
+        notify()    (same as "semaphore.wait")
+    (Note that there is no `numWaiting()` function!)
 */
 class Resource(T) {
     private {
@@ -33,10 +33,28 @@ class Resource(T) {
     }
     
     T allocate(int priority){
-        return value;
+         mtx.wait();
+    if(busy){
+        mtx.wait();
+        numWaiting[priority]++;
+        sems[priority].wait();
+        numWaiting[priority]--;
+    }
+    busy = true;
+    mtx.notify();
+    return value;
     }
     
     void deallocate(T v){
+        mtx.wait();
+    busy = false;
+    if(numWaiting[1] > 0){
+        sems[1].notify();
+    } else if(numWaiting[1] > 0) {
+        sems[0].notify();
+    } else {
+        mtx.notify();
+    }
         value = v;
     }
 }
