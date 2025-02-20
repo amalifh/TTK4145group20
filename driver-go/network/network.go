@@ -1,7 +1,12 @@
 package network
 
+import "Driver-go/elevator"
+
 func TCPNetworkInit() {
 	// Initialize the TCP network
+	chanButtonEvent := make(chan elevator.ButtonEvent)
+	chanBehaviour := make(chan elevator.ElevatorBehaviour)
+	chanElevator := make(chan elevator.Elevator)
 
 }
 
