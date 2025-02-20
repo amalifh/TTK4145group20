@@ -52,10 +52,9 @@ class Resource(T) {
         sems[1].notify();
     } else if(numWaiting[1] > 0) {
         sems[0].notify();
-    } else {
-        mtx.notify();
-    }
-        value = v;
+    } 
+     mtx.notify();
+     value = v;
     }
 }
 
