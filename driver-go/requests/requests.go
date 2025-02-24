@@ -1,6 +1,8 @@
 package requests
 
-import "Driver-go/elevator"
+import (
+	"driver-go/elevator"
+)
 
 // Struct to hold the direction and behavior pair
 type DirnBehaviourPair struct {

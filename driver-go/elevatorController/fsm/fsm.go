@@ -1,10 +1,8 @@
-package fsm
+package elevatorController
 
 import (
-	"Driver-go/driver"
-	"Driver-go/elevator"
-	"Driver-go/requests"
-	"Driver-go/timer"
+	"Driver-go/elevator/types"
+	"Driver-go/elevatorController"
 )
 
 // Initialize the elevator state
