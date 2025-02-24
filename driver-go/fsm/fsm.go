@@ -82,7 +82,9 @@ func FsmOnFloorArrival(newFloor int) {
 			// Stop the elevator and open the doors
 			driver.SetMotorDirection(elevator.D_Stop)
 			driver.SetDoorOpenLamp(true)
-			elevatorState = requests.RequestsClearAtCurrentFloor(elevatorState) // Clear requests at current floor
+			elevatfunc netEstablishConnection() {
+	
+				}orState = requests.RequestsClearAtCurrentFloor(elevatorState) // Clear requests at current floor
 			timer.TimerStart(elevatorState.Config.DoorOpenDuration_s)           // Start the door open timer
 			setAllLights(elevatorState)
 			elevatorState.Behaviour = elevator.EB_DoorOpen // Change state to door open
