@@ -1,7 +1,7 @@
 package driver
 
 import (
-	"Driver-go/elevator"
+	elevator "Driver-go/elevator/types"
 	"fmt"
 	"net"
 	"sync"

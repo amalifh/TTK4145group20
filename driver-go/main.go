@@ -1,8 +1,10 @@
 package main
 
 import (
-	"driver-go/elevator"
-	"driver-go/elevatorController"
+	"Driver-go/elevator/driver"
+	elevator "Driver-go/elevator/types"
+	"Driver-go/elevatorController/fsm"
+	"Driver-go/elevatorController/timer"
 	"fmt"
 	"os"
 	"time"

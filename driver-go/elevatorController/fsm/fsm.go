@@ -1,8 +1,10 @@
 package elevatorController
 
 import (
-	"Driver-go/elevator/types"
-	"Driver-go/elevatorController"
+	"Driver-go/elevator/driver"
+	elevator "Driver-go/elevator/types"
+	"Driver-go/elevatorController/timer"
+	"Driver-go/requests"
 )
 
 // Initialize the elevator state
@@ -80,9 +82,7 @@ func FsmOnFloorArrival(newFloor int) {
 			// Stop the elevator and open the doors
 			driver.SetMotorDirection(elevator.D_Stop)
 			driver.SetDoorOpenLamp(true)
-			elevatfunc netEstablishConnection() {
-	
-				}orState = requests.RequestsClearAtCurrentFloor(elevatorState) // Clear requests at current floor
+			elevatorState = requests.RequestsClearAtCurrentFloor(elevatorState) // Clear requests at current floor
 			timer.TimerStart(elevatorState.Config.DoorOpenDuration_s)           // Start the door open timer
 			setAllLights(elevatorState)
 			elevatorState.Behaviour = elevator.EB_DoorOpen // Change state to door open
