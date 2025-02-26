@@ -68,6 +68,7 @@ func Receiver(port int, peerUpdateCh chan<- PeerUpdate) {
 				updated = true
 				p.Lost = append(p.Lost, k)
 				delete(lastSeen, k)
+				// Transfer Request (if lost connection is the one that has the order)
 			}
 		}
 
