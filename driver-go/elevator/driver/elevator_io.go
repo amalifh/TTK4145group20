@@ -67,7 +67,7 @@ func PollButtons(receiver chan<- elevator.ButtonEvent) {
 		for f := 0; f < _numFloors; f++ {
 			for b := elevator.ButtonType(0); b < 3; b++ {
 				v := GetButton(b, f)               // Get current state of the button
-				if v != prev[f][b] && v != false { // If state changes and button is pressed
+				if v != prev[f][b] && v{ // If state changes and button is pressed
 					receiver <- elevator.ButtonEvent{f, elevator.ButtonType(b)} // Send event to receiver channel
 				}
 				prev[f][b] = v // Update the previous state of the button

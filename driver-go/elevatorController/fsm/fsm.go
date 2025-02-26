@@ -1,4 +1,4 @@
-package elevatorController
+package fsm
 
 import (
 	"Driver-go/elevator/driver"
