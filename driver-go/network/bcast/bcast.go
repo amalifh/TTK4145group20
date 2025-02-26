@@ -1,7 +1,7 @@
 package bcast
 
 import (
-	"Network-go/network/conn"
+	"Driver-go/network/conn"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -13,7 +13,12 @@ const bufSize = 1024
 // Encodes received values from `chans` into type-tagged JSON, then broadcasts
 // it on `port`
 func Transmitter(port int, chans ...interface{}) {
+	// It first checks that all the channels provided are valid and their 
+	// types are suitable for broadcasting.
 	checkArgs(chans...)
+
+	// It creates a list of selectCases for each channel,
+	// which allows it to wait for values to come from those channels concurrently using reflect.Select().
 	typeNames := make([]string, len(chans))
 	selectCases := make([]reflect.SelectCase, len(typeNames))
 	for i, ch := range chans {
