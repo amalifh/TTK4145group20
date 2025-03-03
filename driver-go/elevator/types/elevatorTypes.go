@@ -57,6 +57,7 @@ func InitElevator() Elevator{
 		Floor:     -1,      // Uninitialized floor
 		Direction: ED_Stop,  // Initial direction is stopped
 		Behaviour: EB_Idle, // Initial behavior is idle
+
 		Config: Config{
 			ClearRequestVariant: CV_InDirn, // Default clearing behavior: all requests are handled
 			DoorOpenDuration_s:  1.5,       // Default duration for door open: 1.5 seconds

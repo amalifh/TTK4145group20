@@ -1,7 +1,7 @@
 package driver
 
 import (
-	elevator "Driver-go/elevator/types"
+	"Driver-go/elevator/types"
 	"fmt"
 	"net"
 	"sync"
@@ -13,7 +13,7 @@ const _pollRate = 25 * time.Millisecond // Polling rate for checking inputs from
 
 // Global variables
 var _initialized bool = false      // Flag to check if the driver has been initialized
-var _numFloors = elevator.N_FLOORS // Number of floors in the elevator
+var _numFloors = types.N_FLOORS // Number of floors in the elevator
 var _mtx sync.Mutex                // Mutex for thread safety in the driver functions
 var _conn net.Conn                 // TCP connection to the elevator server
 
@@ -35,12 +35,12 @@ func Init(addr string, numFloors int) {
 }
 
 // SetMotorDirection sends a command to set the motor direction (up, down, or stop)
-func SetMotorDirection(dir elevator.ElevDirection) {
+func SetMotorDirection(dir types.MotorDirection) {
 	write([4]byte{1, byte(dir), 0, 0}) // Send motor direction command to the elevator hardware
 }
 
 // SetButtonLamp controls the button lamps (lights that indicate button presses)
-func SetButtonLamp(button elevator.ButtonType, floor int, value bool) {
+func SetButtonLamp(button types.ButtonType, floor int, value bool) {
 	write([4]byte{2, byte(button), byte(floor), toByte(value)}) // Send button lamp state (on/off) to the hardware
 }
 
@@ -60,15 +60,18 @@ func SetStopLamp(value bool) {
 }
 
 // PollButtons checks for button presses and sends events to the receiver channel
-func PollButtons(receiver chan<- elevator.ButtonEvent) {
+func PollButtons(receiver chan<- types.ButtonEvent) {
 	prev := make([][3]bool, _numFloors) // Array to store previous button states
 	for {
 		time.Sleep(_pollRate) // Poll every 25ms
 		for f := 0; f < _numFloors; f++ {
-			for b := elevator.ButtonType(0); b < 3; b++ {
+			for b := types.ButtonType(0); b < 3; b++ {
 				v := GetButton(b, f)               // Get current state of the button
 				if v != prev[f][b] && v{ // If state changes and button is pressed
-					receiver <- elevator.ButtonEvent{f, elevator.ButtonType(b)} // Send event to receiver channel
+					receiver <- types.ButtonEvent{
+						Floor: f, 
+						Button: types.ButtonType(b),
+					} // Send event to receiver channel
 				}
 				prev[f][b] = v // Update the previous state of the button
 			}
@@ -116,7 +119,7 @@ func PollObstructionSwitch(receiver chan<- bool) {
 }
 
 // GetButton checks the current state of a specific button (floor and button type)
-func GetButton(button elevator.ButtonType, floor int) bool {
+func GetButton(button types.ButtonType, floor int) bool {
 	a := read([4]byte{6, byte(button), byte(floor), 0}) // Read the button state from the hardware
 	return toBool(a[1])                                 // Convert the byte value to a boolean (pressed or not)
 }

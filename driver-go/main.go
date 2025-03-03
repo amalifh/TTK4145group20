@@ -52,16 +52,8 @@ func main() {
 			// Print the obstruction event if it occurred
 			fmt.Printf("%+v\n", a)
 			// Process the obstruction event in the FSM
-			fsm.FsmOnObstruction(a)
+			//fsm.FsmOnObstruction(a)
 
-		// Handle stop button press events
-		case a := <-drv_stop:
-			if a {
-				// Print the stop button press event for debugging
-				fmt.Printf("%+v\n", a)
-				// Handle the stop button press in the FSM
-				fsm.FsmOnStop()
-			}
 
 		// Periodic check every second for timer expiration
 		case <-time.After(1 * time.Second):
