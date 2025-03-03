@@ -52,7 +52,7 @@ type ElevatorSharedInfo struct{
 	Floor     int
 }
 
-func initElevator() Elevator{
+func InitElevator() Elevator{
 	return Elevator{
 		Floor:     -1,      // Uninitialized floor
 		Direction: ED_Stop,  // Initial direction is stopped
@@ -63,4 +63,19 @@ func initElevator() Elevator{
 		},
 	}
 
+}
+
+var sharedInfo ElevatorSharedInfo
+
+
+func GetElevatorInfo() ElevatorInfo {
+	sharedInfo.Mutex.RLock()
+	defer sharedInfo.Mutex.RUnlock()
+
+	return ElevatorInfo{
+		Available: sharedInfo.Available,
+		Behaviour: sharedInfo.Behaviour,
+		Direction: sharedInfo.Direction,
+		Floor:     sharedInfo.Floor,
+	}
 }

@@ -1,7 +1,7 @@
 package request_control
 
 import (
-	. "project/types"
+	. "Driver-go/elevator/types"
 )
 
 /*

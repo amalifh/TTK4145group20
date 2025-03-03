@@ -2,10 +2,6 @@ package request_assigner
 
 import "math"
 
-
-
-func load_input() {} // We probably don't need it
-
 func assign_requests(inputData Input) map[string][][]bool {
 	assignments := make(map[string][][]bool)
 	for elevator := range inputData.States {

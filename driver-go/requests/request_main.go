@@ -2,6 +2,7 @@ package request_control
 
 import (
 	"Driver-go/elevator/driver"
+	. "Driver-go/elevator/types"
 	"Driver-go/network/bcast"
 	"Driver-go/network/peers"
 	"Driver-go/requests/request_assigner"
@@ -46,7 +47,7 @@ func RunRequestControl(
 
 	// This elevator tracks its own cab requests and initial status.
 	allCabRequests[localID] = [N_FLOORS]Request{}
-	latestInfoElevators[localID] = elev.GetElevatorInfo()
+	latestInfoElevators[localID] = GetElevatorInfo()
 
 	for {
 		select {
@@ -123,16 +124,16 @@ func RunRequestControl(
 
 		// Every 200ms, send this elevator’s status and requests to all peers (only if connected).
 		case <-sendTicker.C:
-			info := elev.GetElevatorInfo()
+			info := GetElevatorInfo()
 			latestInfoElevators[localID] = info
 
-			newMessage := NetworkMessage_t{
-				SenderID:           localID,
+			newMessage := NetworkMessage{
+				SID:           		localID,
 				Available:          info.Available,
 				Behaviour:          info.Behaviour,
 				Floor:              info.Floor,
 				Direction:          info.Direction,
-				SenderHallRequests: hallRequests,
+				SHallRequests: 		hallRequests,
 				AllCabRequests:     allCabRequests,
 			}
 
@@ -175,8 +176,7 @@ func RunRequestControl(
 		case message := <-messageRx:
 
 			// Ignore messages from self
-			if message.SenderID == localID {
-				printing.PrintMessage(message)
+			if message.SID == localID {
 				break
 			}
 
@@ -186,7 +186,7 @@ func RunRequestControl(
 			}
 
 			// Update the latest status of the elevator that sent the message.
-			latestInfoElevators[message.SenderID] = ElevatorInfo{
+			latestInfoElevators[message.SID] = ElevatorInfo{
 				Available: message.Available,
 				Behaviour: message.Behaviour,
 				Direction: message.Direction,
@@ -242,11 +242,11 @@ func RunRequestControl(
 
 			for floor := 0; floor < N_FLOORS; floor++ {
 				for btn := 0; btn < N_HALL_BUTTONS; btn++ {
-					if !shouldAcceptRequest(hallRequests[floor][btn], message.SenderHallRequests[floor][btn]) {
+					if !shouldAcceptRequest(hallRequests[floor][btn], message.SHallRequests[floor][btn]) {
 						continue
 					}
 
-					acceptedRequest := message.SenderHallRequests[floor][btn]
+					acceptedRequest := message.SHallRequests[floor][btn]
 					acceptedRequest.AwareList = addToAwareList(acceptedRequest.AwareList, localID)
 
 					switch acceptedRequest.State {

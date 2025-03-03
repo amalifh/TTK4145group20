@@ -35,7 +35,7 @@ func Init(addr string, numFloors int) {
 }
 
 // SetMotorDirection sends a command to set the motor direction (up, down, or stop)
-func SetMotorDirection(dir elevator.Dirn) {
+func SetMotorDirection(dir elevator.ElevDirection) {
 	write([4]byte{1, byte(dir), 0, 0}) // Send motor direction command to the elevator hardware
 }
 

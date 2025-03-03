@@ -27,5 +27,5 @@ type NetworkMessage struct{
 	Direction ElevDirection
 	Floor int
 	SHallRequests [N_FLOORS][N_HALL_BUTTONS]Request
-	AllCabRequest map[string][N_FLOORS]Request
+	AllCabRequests map[string][N_FLOORS]Request
 }

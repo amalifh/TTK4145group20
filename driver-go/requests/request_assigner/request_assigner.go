@@ -106,9 +106,16 @@ func RequestAssigner(
 	}
 
 	assignedRequest := assign_requests(input)
+	sliceAssignment := assignedRequest[localID]
 
-	// This extracts only this elevator's assignments from the global result.
-	return (*assignedRequest)[localID]
+	var fixedAssignment [4][3]bool
+	// Copy elements from sliceAssignment into fixedAssignment
+	for i := 0; i < 4 && i < len(sliceAssignment); i++ {
+		for j := 0; j < 3 && j < len(sliceAssignment[i]); j++ {
+			fixedAssignment[i][j] = sliceAssignment[i][j]
+		}
+	}
+	return fixedAssignment
 }
 
 
