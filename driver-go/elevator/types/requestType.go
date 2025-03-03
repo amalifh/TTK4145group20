@@ -14,12 +14,11 @@ type Request struct{
 }
 
 type NetworkMessage struct{
-	SID string
+	SID string	// Sender ID
 	Available bool
 	Behaviour ElevBehaviour
 	Direction ElevDirection
 	Floor int
 	SHallRequests [N_FLOORS][N_HALL_BUTTONS]Request
 	AllCabRequest map[string][N_FLOORS]Request
-
 }

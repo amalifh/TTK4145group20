@@ -68,13 +68,6 @@
 
 package request_assigner
 
-import (
-	"Driver-go/elevator"
-	"encoding/json"
-	"fmt"
-	"os/exec"
-)
-
 type ElevState struct {
 	Behavior    string        
 	Floor       int            
@@ -102,7 +95,6 @@ func RequestAssigner(
 	localID string, // The ID of this elevator (the one running the code).
 ) [N_FLOORS][N_BUTTONS]bool {
 
-	hraExecutablePath := "hall_request_assigner"
 	/*
 		This part converts the hallRequests array (Request_t) into a simpler [N_FLOORS][N_HALL_BUTTONS]bool array:
 			- It only marks true for requests that are already ASSIGNED.
@@ -126,7 +118,7 @@ func RequestAssigner(
 				- Are marked as unavailable.
 				- Are not in the peerList (unless it's the local elevator itself).
 	*/
-	inputStates := map[string]HRAElevState{}
+	inputStates := map[string]ElevState{}
 
 	for id, cabRequests := range allCabRequests {
 		elevatorInfo, exists := latestInfoElevators[id]
@@ -149,7 +141,7 @@ func RequestAssigner(
 			}
 		}
 		// This is the core of how the elevator state is packaged for the external process.
-		inputStates[id] = HRAElevState{
+		inputStates[id] = ElevState{
 			Behavior:    behaviourToString(elevatorInfo.Behaviour),
 			Floor:       elevatorInfo.Floor,
 			Direction:   directionToString(elevatorInfo.Direction),
@@ -163,41 +155,15 @@ func RequestAssigner(
 	}
 
 	// If there are no valid elevators, it returns an empty request set.
-	input := HRAInput{ // The HRAInput struct holds the hall requests and all elevator states.
+	input := Input{ // The HRAInput struct holds the hall requests and all elevator states.
 		HallRequests: boolHallRequests,
 		States:       inputStates,
 	}
 
-	// This is converted into JSON with:
-	jsonBytes, err := json.Marshal(input)
-	if err != nil {
-		fmt.Println("json.Marshal error: ", err)
-		return [N_FLOORS][N_BUTTONS]bool{}
-	}
 	/*
-		This is where the real logic happens — the decision-making is offloaded to an external process:
-			- It calls hall_request_assigner, passing the elevator state data as a JSON string.
-			- --includeCab probably tells it to consider cab requests too, not just hall requests.
+		Call hall_request_assigner.go
 	*/
-	ret, err := exec.Command(hraExecutablePath, "-i", string(jsonBytes), "--includeCab").CombinedOutput()
-	if err != nil {
-		fmt.Println("exec.Command error: ", err)
-		fmt.Println(string(ret))
-		return [N_FLOORS][N_BUTTONS]bool{}
-	}
-
-	/*
-		Parse the output from hall_request_assigner:
-			- This maps each elevator ID to a 2D array of floor-button assignments.
-			- This is unmarshaled into a map[string][N_FLOORS][N_BUTTONS]bool.
-	*/
-	output := new(map[string][N_FLOORS][N_BUTTONS]bool)
-	err = json.Unmarshal(ret, &output)
-	if err != nil {
-		fmt.Println("json.Unmarshal error: ", err)
-		return [N_FLOORS][N_BUTTONS]bool{}
-	}
-
+	
 	// This extracts only this elevator's assignments from the global result.
 	return (*output)[localID]
 }

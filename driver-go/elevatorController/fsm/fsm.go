@@ -2,12 +2,12 @@ package fsm
 
 import (
 	"Driver-go/elevator/driver"
-	elevator "Driver-go/elevator/types"
+	"Driver-go/elevator/types"
 	"Driver-go/elevatorController/timer"
 )
 
 // Initialize the elevator state
-var elevatorState = elevator.ElevatorUninitialized()
+var elevatorState = types.initElevator()
 
 // Set all button lamps based on the elevator's current request state
 func setAllLights(e elevator.Elevator) {
@@ -20,8 +20,8 @@ func setAllLights(e elevator.Elevator) {
 
 // Initialize the elevator to move down when between floors
 func FsmOnInitBetweenFloors() {
-	driver.SetMotorDirection(elevator.D_Down)    // Set motor to move down
-	elevatorState.Dirn = elevator.D_Down         // Set direction to down
+	driver.SetMotorDirection(elevator.MD_Down)    // Set motor to move down
+	elevatorState.Dirn = elevator.MD_Down         // Set direction to down
 	elevatorState.Behaviour = elevator.EB_Moving // Set elevator state to moving
 }
 
