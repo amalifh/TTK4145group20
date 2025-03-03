@@ -12,7 +12,7 @@ func assign_requests(Request_t input_data) map[string][][]bool{
 			assignments[elevator][i] = []bool{false, false} // [up, down]
 		}
 	}
-	
+
 	// Assign requests to elevators
 	for floor, hallRequest := range inputData.HallRequests {
 		if hallRequest[0] {

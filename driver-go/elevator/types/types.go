@@ -4,6 +4,7 @@ package elevator
 const (
 	N_FLOORS  = 4 // Total number of floors in the elevator
 	N_BUTTONS = 3 // Number of button types (HallUp, HallDown, Cab)
+	N_HALL_BUTTONS = 2 // Up, down
 )
 
 // Enum for elevator direction
@@ -60,7 +61,6 @@ type Elevator struct {
 	Requests            [N_FLOORS][N_BUTTONS]bool // 2D array to track which floor has which button pressed
 	Behaviour           ElevatorBehaviour         // Current behavior of the elevator
 	ObstructionDetected bool                      // Flag to indicate if the obstruction switch is active
-	StopButtonPressed   bool                      // Flag to indicate if the stop button is pressed
 	Config              Config                    // Configuration for the elevator
 }
 

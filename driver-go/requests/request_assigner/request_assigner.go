@@ -69,22 +69,22 @@
 package request_assigner
 
 import (
-	. "driver-go/elevator/types"
+	"Driver-go/elevator"
 	"encoding/json"
 	"fmt"
 	"os/exec"
 )
 
-type HRAElevState struct {
-	Behavior    string         `json:"behaviour"`
-	Floor       int            `json:"floor"`
-	Direction   string         `json:"direction"`
-	CabRequests [N_FLOORS]bool `json:"cabRequests"`
+type ElevState struct {
+	Behavior    string        
+	Floor       int            
+	Direction   string         
+	CabRequests [N_FLOORS]bool 
 }
 
-type HRAInput struct {
-	HallRequests [N_FLOORS][2]bool       `json:"hallRequests"`
-	States       map[string]HRAElevState `json:"states"`
+type Input struct {
+	HallRequests [N_FLOORS][2]bool       
+	States       map[string]ElevState
 }
 
 /*
