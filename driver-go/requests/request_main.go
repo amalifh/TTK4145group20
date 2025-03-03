@@ -1,8 +1,10 @@
 package request_control
 
 import (
+	"Driver-go/elevator/driver"
 	"Driver-go/network/bcast"
 	"Driver-go/network/peers"
+	"Driver-go/requests/request_assigner"
 	"time"
 )
 
@@ -16,14 +18,14 @@ const (
 func RunRequestControl(
 	localID string, // Identifier for this elevator
 	requestsCh chan<- [N_FLOORS][N_BUTTONS]bool, // Channel for sending the list of requests to other components.
-	completedRequestCh <-chan ButtonEvent_t, // Receives notifications when requests are completed.
+	completedRequestCh <-chan ButtonEvent, // Receives notifications when requests are completed.
 ) {
 	// Polls hardware buttons and sends button presses into buttonEventCh.
-	buttonEventCh := make(chan ButtonEvent_t)
-	go elevio.PollButtons(buttonEventCh)
+	buttonEventCh := make(chan ButtonEvent)
+	go driver.PollButtons(buttonEventCh)
 
-	messageTx := make(chan NetworkMessage_t)    // Outgoing messages
-	messageRx := make(chan NetworkMessage_t)    // Incoming messages
+	messageTx := make(chan NetworkMessage)      // Outgoing messages
+	messageRx := make(chan NetworkMessage)      // Incoming messages
 	peerUpdateCh := make(chan peers.PeerUpdate) // Peer discovery updates
 
 	go peers.Transmitter(PEER_PORT, localID, nil) // Sends presence on peer network
@@ -38,12 +40,12 @@ func RunRequestControl(
 	peerList := []string{}      // All known peers (other elevators).
 	connectedToNetwork := false // Tracks if this elevator has joined the network.
 
-	hallRequests := [N_FLOORS][N_HALL_BUTTONS]Request_t{}  // Requests for up/down buttons on each floor.
-	allCabRequests := make(map[string][N_FLOORS]Request_t) // Requests inside elevators (each elevator tracks its own).
-	latestInfoElevators := make(map[string]ElevatorInfo_t) // Most recent status of all known elevators.
+	hallRequests := [N_FLOORS][N_HALL_BUTTONS]Request{}  // Requests for up/down buttons on each floor.
+	allCabRequests := make(map[string][N_FLOORS]Request) // Requests inside elevators (each elevator tracks its own).
+	latestInfoElevators := make(map[string]ElevatorInfo) // Most recent status of all known elevators.
 
 	// This elevator tracks its own cab requests and initial status.
-	allCabRequests[localID] = [N_FLOORS]Request_t{}
+	allCabRequests[localID] = [N_FLOORS]Request{}
 	latestInfoElevators[localID] = elev.GetElevatorInfo()
 
 	for {
@@ -59,7 +61,7 @@ func RunRequestControl(
 				- Set lamps for assigned requests.
 		*/
 		case btn := <-buttonEventCh:
-			request := Request_t{}
+			request := Request{}
 			if btn.Button == BT_Cab {
 				request = allCabRequests[localID][btn.Floor]
 			} else {
@@ -76,13 +78,13 @@ func RunRequestControl(
 				if isSubset(peerList, request.AwareList) {
 					request.State = ASSIGNED
 					request.AwareList = []string{localID}
-					elevio.SetButtonLamp(btn.Button, btn.Floor, true)
+					driver.SetButtonLamp(btn.Button, btn.Floor, true)
 				}
 			case NEW:
 				if isSubset(peerList, request.AwareList) {
 					request.State = ASSIGNED
 					request.AwareList = []string{localID}
-					elevio.SetButtonLamp(btn.Button, btn.Floor, true)
+					driver.SetButtonLamp(btn.Button, btn.Floor, true)
 				}
 			}
 
@@ -96,7 +98,7 @@ func RunRequestControl(
 
 		// When a request is completed, mark it COMPLETED, increment a counter, and turn off the lamp.
 		case btn := <-completedRequestCh:
-			request := Request_t{}
+			request := Request{}
 			if btn.Button == BT_Cab {
 				request = allCabRequests[localID][btn.Floor]
 			} else {
@@ -108,7 +110,7 @@ func RunRequestControl(
 				request.State = COMPLETED
 				request.AwareList = []string{localID}
 				request.Count++
-				elevio.SetButtonLamp(btn.Button, btn.Floor, false)
+				driver.SetButtonLamp(btn.Button, btn.Floor, false)
 			}
 
 			if btn.Button == BT_Cab {
@@ -184,7 +186,7 @@ func RunRequestControl(
 			}
 
 			// Update the latest status of the elevator that sent the message.
-			latestInfoElevators[message.SenderID] = ElevatorInfo_t{
+			latestInfoElevators[message.SenderID] = ElevatorInfo{
 				Available: message.Available,
 				Behaviour: message.Behaviour,
 				Direction: message.Direction,
@@ -229,7 +231,7 @@ func RunRequestControl(
 					}
 
 					if id == localID && acceptedRequest.State == ASSIGNED {
-						elevio.SetButtonLamp(BT_Cab, floor, true)
+						driver.SetButtonLamp(BT_Cab, floor, true)
 					}
 
 					tmpCabRequests := allCabRequests[id]
@@ -249,16 +251,16 @@ func RunRequestControl(
 
 					switch acceptedRequest.State {
 					case COMPLETED:
-						elevio.SetButtonLamp(ButtonType_t(btn), floor, false)
+						driver.SetButtonLamp(ButtonType(btn), floor, false)
 					case NEW:
-						elevio.SetButtonLamp(ButtonType_t(btn), floor, false)
+						driver.SetButtonLamp(ButtonType(btn), floor, false)
 						if isSubset(peerList, acceptedRequest.AwareList) {
 							acceptedRequest.State = ASSIGNED
 							acceptedRequest.AwareList = []string{localID}
-							elevio.SetButtonLamp(ButtonType_t(btn), floor, true)
+							driver.SetButtonLamp(ButtonType(btn), floor, true)
 						}
 					case ASSIGNED:
-						elevio.SetButtonLamp(ButtonType_t(btn), floor, true)
+						driver.SetButtonLamp(ButtonType(btn), floor, true)
 					}
 
 					hallRequests[floor][btn] = acceptedRequest

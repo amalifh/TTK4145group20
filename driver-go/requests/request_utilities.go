@@ -9,7 +9,7 @@ This function determines whether the local elevator should accept a
 request update coming from another elevator in the network.
 */
 
-func shouldAcceptRequest(localRequest Request_t, messageRequest Request_t) bool {
+func shouldAcceptRequest(localRequest Request, messageRequest Request) bool {
 	// If the remote request's count (how many times it's been updated) is lower, discard it.
 	// The local request is more recent.
 	if messageRequest.Count < localRequest.Count {

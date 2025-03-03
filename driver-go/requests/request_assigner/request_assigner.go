@@ -69,14 +69,14 @@
 package request_assigner
 
 type ElevState struct {
-	Behavior    string        
-	Floor       int            
-	Direction   string         
-	CabRequests [N_FLOORS]bool 
+	Behavior    string
+	Floor       int
+	Direction   string
+	CabRequests [N_FLOORS]bool
 }
 
 type Input struct {
-	HallRequests [N_FLOORS][2]bool       
+	HallRequests [N_FLOORS][2]bool
 	States       map[string]ElevState
 }
 
@@ -88,15 +88,15 @@ type Input struct {
 */
 
 func RequestAssigner(
-	hallRequests [N_FLOORS][N_HALL_BUTTONS]Request_t, // 2D array representing hall button requests (each floor has 2 buttons: UP and DOWN).
-	allCabRequests map[string][N_FLOORS]Request_t, // Map of cab requests for each elevator. Each elevator has its own requests (like floor buttons inside the elevator).
-	latestInfoElevators map[string]ElevatorInfo_t, // Latest known state (floor, behavior, direction) for each elevator.
+	hallRequests [N_FLOORS][N_HALL_BUTTONS]Request, // 2D array representing hall button requests (each floor has 2 buttons: UP and DOWN).
+	allCabRequests map[string][N_FLOORS]Request, // Map of cab requests for each elevator. Each elevator has its own requests (like floor buttons inside the elevator).
+	latestInfoElevators map[string]ElevatorInfo, // Latest known state (floor, behavior, direction) for each elevator.
 	peerList []string, // List of known peers (other elevators in the system).
 	localID string, // The ID of this elevator (the one running the code).
 ) [N_FLOORS][N_BUTTONS]bool {
 
 	/*
-		This part converts the hallRequests array (Request_t) into a simpler [N_FLOORS][N_HALL_BUTTONS]bool array:
+		This part converts the hallRequests array (Request) into a simpler [N_FLOORS][N_HALL_BUTTONS]bool array:
 			- It only marks true for requests that are already ASSIGNED.
 			- This simplifies data for the external program.
 	*/
@@ -163,12 +163,12 @@ func RequestAssigner(
 	/*
 		Call hall_request_assigner.go
 	*/
-	
+
 	// This extracts only this elevator's assignments from the global result.
 	return (*output)[localID]
 }
 
-func behaviourToString(b Behaviour_t) string {
+func behaviourToString(b Behaviour) string {
 	switch b {
 	case IDLE:
 		return "idle"
@@ -180,7 +180,7 @@ func behaviourToString(b Behaviour_t) string {
 	return "idle"
 }
 
-func directionToString(d Direction_t) string {
+func directionToString(d Direction) string {
 	switch d {
 	case DIR_DOWN:
 		return "down"
