@@ -1,13 +1,8 @@
 package request_control
 
 import (
-	printing "project/debug_printing"
-	elev "project/elevator_control"
-	elevio "project/hardware"
-	"project/network/bcast"
-	"project/network/peers"
-	"project/request_control/request_assigner"
-	. "project/types"
+	"Driver-go/network/bcast"
+	"Driver-go/network/peers"
 	"time"
 )
 

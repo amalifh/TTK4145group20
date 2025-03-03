@@ -4,7 +4,6 @@ import (
 	"Driver-go/elevator/driver"
 	elevator "Driver-go/elevator/types"
 	"Driver-go/elevatorController/timer"
-	"Driver-go/requests"
 )
 
 // Initialize the elevator state
