@@ -13,6 +13,13 @@ type Request struct{
 	AwareList []string
 }
 
+type ElevatorInfo struct{
+	Available bool
+	Behaviour ElevBehaviour
+	Direction ElevDirection
+	Floor     int
+}
+
 type NetworkMessage struct{
 	SID string	// Sender ID
 	Available bool

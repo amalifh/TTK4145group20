@@ -7,76 +7,20 @@
 		- It takes the output and returns only the assignments for this elevator.
 */
 
-/*
-	hall_request_assigner Pseudo Code (Python):
-		import json
-		import sys
-
-		def load_input():
-			import argparse
-			parser = argparse.ArgumentParser()
-			parser.add_argument("-i", required=True)
-			args = parser.parse_args()
-			data = json.loads(args.i)
-			return data
-
-		def assign_requests(input_data):
-			assignments = {elevator: [[False, False] for _ in range(len(input_data["hallRequests"]))] for elevator in input_data["states"]}
-
-			for floor, (up, down) in enumerate(input_data["hallRequests"]):
-				if up:
-					best_elevator = find_best_elevator(input_data, floor, "up")
-					if best_elevator:
-						assignments[best_elevator][floor][0] = True
-
-				if down:
-					best_elevator = find_best_elevator(input_data, floor, "down")
-					if best_elevator:
-						assignments[best_elevator][floor][1] = True
-
-			return assignments
-
-		def find_best_elevator(input_data, floor, direction):
-			best_elevator = None
-			best_score = float('inf')
-
-			for elevator, state in input_data["states"].items():
-				if state["behaviour"] == "idle":
-					score = abs(state["floor"] - floor)
-				elif state["direction"] == direction:
-					if (direction == "up" and state["floor"] <= floor) or (direction == "down" and state["floor"] >= floor):
-						score = abs(state["floor"] - floor)
-					else:
-						score = abs(state["floor"] - floor) + 10  # Penalize turning around
-				else:
-					score = abs(state["floor"] - floor) + 20  # Penalize opposite direction
-
-				if score < best_score:
-					best_score = score
-					best_elevator = elevator
-
-			return best_elevator
-
-		def main():
-			input_data = load_input()
-			assignments = assign_requests(input_data)
-			print(json.dumps(assignments))
-
-		if __name__ == "__main__":
-			main()
-*/
-
 package request_assigner
 
+import (
+	. "Driver-go/elevator/types"
+)
 type ElevState struct {
-	Behavior    string
+	Behaviour   string
 	Floor       int
 	Direction   string
 	CabRequests [N_FLOORS]bool
 }
 
 type Input struct {
-	HallRequests [N_FLOORS][2]bool
+	HallRequests [N_FLOORS][N_HALL_BUTTONS]bool
 	States       map[string]ElevState
 }
 
@@ -141,8 +85,9 @@ func RequestAssigner(
 			}
 		}
 		// This is the core of how the elevator state is packaged for the external process.
+		
 		inputStates[id] = ElevState{
-			Behavior:    behaviourToString(elevatorInfo.Behaviour),
+			Behaviour:    behaviourToString(elevatorInfo.Behaviour),
 			Floor:       elevatorInfo.Floor,
 			Direction:   directionToString(elevatorInfo.Direction),
 			CabRequests: boolCabRequests,
@@ -160,37 +105,37 @@ func RequestAssigner(
 		States:       inputStates,
 	}
 
-	/*
-		Call hall_request_assigner.go
-	*/
+	assignedRequest := assign_requests(input)
 
 	// This extracts only this elevator's assignments from the global result.
-	return (*output)[localID]
+	return (*assignedRequest)[localID]
 }
 
-func behaviourToString(b Behaviour) string {
+
+func behaviourToString(b ElevBehaviour) string {
 	switch b {
-	case IDLE:
+	case EB_Idle:
 		return "idle"
-	case MOVING:
+	case EB_Moving:
 		return "moving"
-	case DOOR_OPEN:
+	case EB_DoorOpen:
 		return "doorOpen"
 	}
 	return "idle"
 }
 
-func directionToString(d Direction) string {
+func directionToString(d ElevDirection) string {
 	switch d {
-	case DIR_DOWN:
+	case ED_Down:
 		return "down"
-	case DIR_UP:
+	case ED_Up:
 		return "up"
-	case DIR_STOP:
+	case ED_Stop:
 		return "stop"
 	}
 	return "stop"
 }
+
 
 func sliceContains(slice []string, elem string) bool {
 	for _, element := range slice {

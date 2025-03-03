@@ -2,11 +2,13 @@ package request_assigner
 
 import "math"
 
+
+
 func load_input() {} // We probably don't need it
 
-func assign_requests(Request input_data) map[string][][]bool {
+func assign_requests(inputData Input) map[string][][]bool {
 	assignments := make(map[string][][]bool)
-	for elevator := range input_data.States {
+	for elevator := range inputData.States {
 		assignments[elevator] = make([][]bool, len(inputData.HallRequests))
 		for i := range assignments[elevator] {
 			assignments[elevator][i] = []bool{false, false} // [up, down]
@@ -32,7 +34,7 @@ func assign_requests(Request input_data) map[string][][]bool {
 	return assignments
 }
 
-func findBestElevator(Request input_data, Floor floor, Dirn direction) string {
+func findBestElevator(inputData Input, floor int, direction string) string {
 	var bestElevator string
 	bestScore := math.Inf(1) // Infinity
 

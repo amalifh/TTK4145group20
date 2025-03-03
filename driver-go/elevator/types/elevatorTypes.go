@@ -18,9 +18,9 @@ const (
 
 type ElevDirection int 
 const (
-	EB_Down ElevDirection = iota	// Moving down
-	EB_Stop							// Stopped (idle state)
-	EB_Up        					// Moving up
+	ED_Down ElevDirection = iota	// Moving down
+	ED_Stop							// Stopped (idle state)
+	ED_Up        					// Moving up
 )
 
 type ClearRequestVariant int
@@ -55,7 +55,7 @@ type ElevatorSharedInfo struct{
 func initElevator() Elevator{
 	return Elevator{
 		Floor:     -1,      // Uninitialized floor
-		Direction:      EB_Stop,  // Initial direction is stopped
+		Direction: ED_Stop,  // Initial direction is stopped
 		Behaviour: EB_Idle, // Initial behavior is idle
 		Config: Config{
 			ClearRequestVariant: CV_InDirn, // Default clearing behavior: all requests are handled
