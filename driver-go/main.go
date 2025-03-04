@@ -2,8 +2,7 @@ package main
 
 import (
 	"Driver-go/elevator/driver"
-	elevator "Driver-go/elevator/types"
-	"Driver-go/elevatorController/fsm"
+	. "Driver-go/elevator/types"
 	"Driver-go/elevatorController/timer"
 	"fmt"
 	"os"
@@ -53,7 +52,6 @@ func main() {
 			fmt.Printf("%+v\n", a)
 			// Process the obstruction event in the FSM
 			//fsm.FsmOnObstruction(a)
-
 
 		// Periodic check every second for timer expiration
 		case <-time.After(1 * time.Second):

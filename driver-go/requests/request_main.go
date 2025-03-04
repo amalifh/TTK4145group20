@@ -3,6 +3,7 @@ package request_control
 import (
 	"Driver-go/elevator/driver"
 	. "Driver-go/elevator/types"
+	"Driver-go/elevatorController"
 	"Driver-go/network/bcast"
 	"Driver-go/network/peers"
 	"Driver-go/requests/request_assigner"
@@ -47,7 +48,7 @@ func RunRequestControl(
 
 	// This elevator tracks its own cab requests and initial status.
 	allCabRequests[localID] = [N_FLOORS]Request{}
-	latestInfoElevators[localID] = GetElevatorInfo()
+	latestInfoElevators[localID] = elevatorController.GetElevatorInfo()
 
 	for {
 		select {
@@ -124,17 +125,17 @@ func RunRequestControl(
 
 		// Every 200ms, send this elevator’s status and requests to all peers (only if connected).
 		case <-sendTicker.C:
-			info := GetElevatorInfo()
+			info := elevatorController.GetElevatorInfo()
 			latestInfoElevators[localID] = info
 
 			newMessage := NetworkMessage{
-				SID:           		localID,
-				Available:          info.Available,
-				Behaviour:          info.Behaviour,
-				Floor:              info.Floor,
-				Direction:          info.Direction,
-				SHallRequests: 		hallRequests,
-				AllCabRequests:     allCabRequests,
+				SID:            localID,
+				Available:      info.Available,
+				Behaviour:      info.Behaviour,
+				Floor:          info.Floor,
+				Direction:      info.Direction,
+				SHallRequests:  hallRequests,
+				AllCabRequests: allCabRequests,
 			}
 
 			if connectedToNetwork {
