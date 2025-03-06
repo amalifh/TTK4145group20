@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"Driver-go/elevator/driver"
+	localController "Driver-go/elevator/localController"
 	"Driver-go/elevator/types"
 	elevator "Driver-go/elevator/types"
-	"Driver-go/elevatorController/localController"
 	"Driver-go/elevatorController/timer"
 )
 
