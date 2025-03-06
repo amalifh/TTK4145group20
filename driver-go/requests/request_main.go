@@ -3,7 +3,6 @@ package request_control
 import (
 	"Driver-go/elevator/driver"
 	. "Driver-go/elevator/types"
-	"Driver-go/elevatorController"
 	"Driver-go/network/bcast"
 	"Driver-go/network/peers"
 	"Driver-go/requests/request_assigner"
@@ -48,12 +47,12 @@ func RunRequestControl(
 
 	// This elevator tracks its own cab requests and initial status.
 	allCabRequests[localID] = [N_FLOORS]Request{}
-	latestInfoElevators[localID] = elevatorController.GetElevatorInfo()
+	latestInfoElevators[localID] = ElevatorInfo{}
 
 	for {
 		select {
 		/*
-			When a button press is detected, it retrieves the Request_t for that button and floor.
+			When a button press is detected, it retrieves the Request for that button and floor.
 			Different Logic for Cab vs Hall buttons.
 				- Cab buttons (inside the elevator): Only this elevator cares.
 				- Hall buttons (up/down outside elevator): Network-wide coordination.
@@ -77,13 +76,13 @@ func RunRequestControl(
 			case COMPLETED:
 				request.State = NEW
 				request.AwareList = []string{localID}
-				if isSubset(peerList, request.AwareList) {
+				if IsSubset(peerList, request.AwareList) {
 					request.State = ASSIGNED
 					request.AwareList = []string{localID}
 					driver.SetButtonLamp(btn.Button, btn.Floor, true)
 				}
 			case NEW:
-				if isSubset(peerList, request.AwareList) {
+				if IsSubset(peerList, request.AwareList) {
 					request.State = ASSIGNED
 					request.AwareList = []string{localID}
 					driver.SetButtonLamp(btn.Button, btn.Floor, true)
@@ -125,7 +124,7 @@ func RunRequestControl(
 
 		// Every 200ms, send this elevator’s status and requests to all peers (only if connected).
 		case <-sendTicker.C:
-			info := elevatorController.GetElevatorInfo()
+			info := ElevatorInfo{}
 			latestInfoElevators[localID] = info
 
 			newMessage := NetworkMessage{
@@ -169,7 +168,7 @@ func RunRequestControl(
 				connectedToNetwork = true
 			}
 
-			if isSubset([]string{localID}, p.Lost) {
+			if IsSubset([]string{localID}, p.Lost) {
 				connectedToNetwork = false
 			}
 
@@ -212,7 +211,7 @@ func RunRequestControl(
 				if _, idExist := allCabRequests[id]; !idExist {
 					// First informaton about this elevator
 					for floor := range cabRequests {
-						cabRequests[floor].AwareList = addToAwareList(cabRequests[floor].AwareList, localID)
+						cabRequests[floor].AwareList = AddToAwareList(cabRequests[floor].AwareList, localID)
 					}
 					allCabRequests[id] = cabRequests
 					continue
@@ -224,9 +223,9 @@ func RunRequestControl(
 					}
 
 					acceptedRequest := cabRequests[floor]
-					acceptedRequest.AwareList = addToAwareList(acceptedRequest.AwareList, localID)
+					acceptedRequest.AwareList = AddToAwareList(acceptedRequest.AwareList, localID)
 
-					if acceptedRequest.State == NEW && isSubset(peerList, acceptedRequest.AwareList) {
+					if acceptedRequest.State == NEW && IsSubset(peerList, acceptedRequest.AwareList) {
 						acceptedRequest.State = ASSIGNED
 						acceptedRequest.AwareList = []string{localID}
 					}
@@ -248,14 +247,14 @@ func RunRequestControl(
 					}
 
 					acceptedRequest := message.SHallRequests[floor][btn]
-					acceptedRequest.AwareList = addToAwareList(acceptedRequest.AwareList, localID)
+					acceptedRequest.AwareList = AddToAwareList(acceptedRequest.AwareList, localID)
 
 					switch acceptedRequest.State {
 					case COMPLETED:
 						driver.SetButtonLamp(ButtonType(btn), floor, false)
 					case NEW:
 						driver.SetButtonLamp(ButtonType(btn), floor, false)
-						if isSubset(peerList, acceptedRequest.AwareList) {
+						if IsSubset(peerList, acceptedRequest.AwareList) {
 							acceptedRequest.State = ASSIGNED
 							acceptedRequest.AwareList = []string{localID}
 							driver.SetButtonLamp(ButtonType(btn), floor, true)
