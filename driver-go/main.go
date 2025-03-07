@@ -17,7 +17,7 @@ func main() {
 	completedCh := make(chan types.ButtonEvent)
 
 	types.InitElevator()
-	go request_control.RunRequestControl(
+	request_control.RunRequestControl(
 		"elevator1",
 		requestsCh,
 		completedCh,
