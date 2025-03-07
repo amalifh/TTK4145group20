@@ -61,8 +61,8 @@ func InitElevator() Elevator {
 		Behaviour: EB_Idle, // Initial behavior is idle
 
 		Config: Config{
-			ClearRequestVariant: CV_InDirn, // Default clearing behavior: all requests are handled
-			DoorOpenDuration_s:  DOOR_TIMEOUT_SEC,       // Default duration for door open: 1.5 seconds
+			ClearRequestVariant: CV_InDirn,        // Default clearing behavior: all requests are handled
+			DoorOpenDuration_s:  DOOR_TIMEOUT_SEC, // Default duration for door open: 1.5 seconds
 		},
 	}
 

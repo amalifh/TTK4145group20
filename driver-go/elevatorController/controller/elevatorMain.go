@@ -1,24 +1,20 @@
 package controller
 
 import (
-	"fmt"
-	"os"
-
 	"Driver-go/elevator/driver"
-	localController "Driver-go/elevator/localController"
 	"Driver-go/elevator/types"
 	elevator "Driver-go/elevator/types"
+	localController "Driver-go/elevatorController/controller/localController"
 	"Driver-go/elevatorController/timer"
+	"fmt"
+	"os"
 )
 
-func main() {
+func elevatorMain() {
 	// Initialize the driver connection to the elevator server.
 	addr := os.Args[1]
 	addr = "localhost:" + addr
 	driver.Init(addr, elevator.N_FLOORS)
-
-	// Handle initialization (e.g. moving to a floor if between floors) via the merged controller FSM.
-	localController.OnInitBetweenFloors()
 
 	// Create channels for receiving events from the driver.
 	drv_buttons := make(chan elevator.ButtonEvent) // Button press events.
@@ -31,6 +27,8 @@ func main() {
 	go driver.PollFloorSensor(drv_floors)
 	go driver.PollObstructionSwitch(drv_obstr)
 	go driver.PollStopButton(drv_stop)
+
+	// Initialize the local controller.
 
 	// Create custom timers for door and mobility events.
 	doorTimer := timer.NewTimer()
@@ -53,7 +51,7 @@ func main() {
 		// Floor sensor events.
 		case floor := <-drv_floors:
 			fmt.Printf("Floor Arrival: %d\n", floor)
-			localController.OnFloorArrival(floor)
+			localController.OnFloorArrival(e, floor)
 			// When moving, restart the mobility timer on floor arrival.
 			if localController.IsMoving() {
 				mobilityTimeoutCh = startTimerChannel(mobilityTimer, types.MOBILITY_TIMEOUT_SEC)
@@ -62,7 +60,7 @@ func main() {
 		// Obstruction events.
 		case obstructed := <-drv_obstr:
 			fmt.Printf("Obstruction Event: %+v\n", obstructed)
-			localController.OnObstruction(obstructed)
+			localController.OnObstruction(e, obstructed)
 			// If an obstruction is detected, stop the door timer.
 			if obstructed {
 				doorTimer.Stop()
@@ -90,7 +88,7 @@ func main() {
 			mobilityTimeoutCh = nil
 			mobilityTimer.Stop()
 			fmt.Println("Mobility timer expired")
-			localController.OnMobilityTimeout()
+			localController.OnMobilityTimeout(e)
 		}
 	}
 }
