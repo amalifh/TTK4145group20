@@ -1,5 +1,0 @@
-1. Good overall structure, modulized well.
-2. Having everything in the folder called "network" is not intuitive, should be taken out.
-3. Main is structured and clearly sets up the components and can clearly tell the communication. 
-4. Huge sections of code commented out some places, should be removed if not used. 
-5. 
