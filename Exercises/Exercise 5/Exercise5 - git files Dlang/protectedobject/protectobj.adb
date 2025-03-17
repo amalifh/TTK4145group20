@@ -32,24 +32,26 @@ procedure protectobj is
     
         entry allocateLow(val: out IntVec.Vector) when True is
         begin
-            --Put_Line("allocateLow");
+            Put_Line("allocateLow");
             val := value;
+            busy := True;
         end allocateLow;
     
         entry allocateHigh(val: out IntVec.Vector) when True is
         begin
-            --Put_Line("allocateHigh");
+            Put_Line("allocateHigh");
             val := value;
+            busy := True;
         end allocateHigh;
 
         procedure deallocate(val: IntVec.Vector) is
         begin
-            --Put_Line("deallocate");
+            Put_Line("deallocate");
             value := val;
+            busy := False;
         end deallocate;
-
+   
     end Resource;
-
 
 
     type ExecutionState is (none, waiting, executing, done);
