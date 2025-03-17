@@ -73,7 +73,7 @@ struct PriorityQueue(T) {
         struct Elem {
             T   val;
             int priority;
-            string toString(){
+            string __toString__(){
                 return format!("%s:%s")(priority, val);
             }
         }
