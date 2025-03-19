@@ -3,43 +3,26 @@ package request_control
 import (
 	"Driver-go/elevator/driver"
 	. "Driver-go/elevator/types"
-	"Driver-go/network/bcast"
 	"Driver-go/network/peers"
 	"Driver-go/requests/request_assigner"
 	"time"
 )
 
-const (
-	PEER_PORT               = 30052 // Peer discovery port
-	MSG_PORT                = 30051 // Broadcast message port
-	SEND_TIME_MS            = 200   // Send elevator status every 200ms
-	ASSIGN_REQUESTS_TIME_MS = 1000  // RE-assign request every 1000ms
-)
-
-func RunRequestControl(
+func RequestHandler(
 	localID string, // Identifier for this elevator
 	requestsCh chan<- [N_FLOORS][N_BUTTONS]bool, // Channel for sending the list of requests to other components.
 	completedRequestCh <-chan ButtonEvent, // Receives notifications when requests are completed.
+	buttonEventCh <-chan ButtonEvent, // Receives notifications when buttons are pressed.
+	messageTx chan<- NetworkMessage, // Channel for sending messages to other elevators.
+	messageRx <-chan NetworkMessage, // Channel for receiving messages from other elevators.
+	peerUpdateCh <-chan peers.PeerUpdate, // Channel for receiving updates about the network.
 ) {
-	// Polls hardware buttons and sends button presses into buttonEventCh.
-	buttonEventCh := make(chan ButtonEvent)
-	go driver.PollButtons(buttonEventCh)
 
-	messageTx := make(chan NetworkMessage)      // Outgoing messages
-	messageRx := make(chan NetworkMessage)      // Incoming messages
-	peerUpdateCh := make(chan peers.PeerUpdate) // Peer discovery updates
-
-	go peers.Transmitter(PEER_PORT, localID, nil) // Sends presence on peer network
-	go peers.Receiver(PEER_PORT, peerUpdateCh)    // Receives peer updates
-	go bcast.Transmitter(MSG_PORT, messageTx)     // Broadcasts messages
-	go bcast.Receiver(MSG_PORT, messageRx)        // Receives broadcast messages
-
-	// These timers trigger periodic sending of status and request assignment.
 	sendTicker := time.NewTicker(SEND_TIME_MS * time.Millisecond)
 	assignRequestTicker := time.NewTicker(ASSIGN_REQUESTS_TIME_MS * time.Millisecond)
 
-	peerList := []string{}      // All known peers (other elevators).
-	connectedToNetwork := false // Tracks if this elevator has joined the network.
+	connectedToNetwork := false
+	peerList := []string{}
 
 	hallRequests := [N_FLOORS][N_HALL_BUTTONS]Request{}  // Requests for up/down buttons on each floor.
 	allCabRequests := make(map[string][N_FLOORS]Request) // Requests inside elevators (each elevator tracks its own).
