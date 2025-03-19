@@ -1,0 +1,10 @@
+2fd97820
+8
+1. Good overall structure, modularized well.
+2. Having everything in the folder called "network" is counterintuitive, should be taken out.
+3. Main is structured and clearly sets up the components and can clearly tell the communication. 
+4. Huge sections of code commented out some places, should be removed if not used.
+5. fsm.go: setting on all of the lights? Is commented on so know the group is aware
+6. Inconsistency with comments on English and Norwegian, should be all in English. 
+
+Overall, the project demonstrates a solid grasp of concurrent programming in Go and a clear peer-to-peer design with master/slave coordination. With some refinements in structure (e.g. reducing global state and enhancing error management) and consistent documentation, the codebase should remain maintainable as the project scales.

@@ -1,0 +1,35 @@
+Score: 7.5/9
+
+Key points:
+    1. Good structure of main.go:
+        - Correct channels handling.
+        - Correct communication set up.
+        - Handling of the whole hardware part done correctly.
+    2. Declared constant (NFloors, NButtons, MElevators) but not used in most of the code.
+    3. Good implementation of the FSM logic: 
+        - Checking current state and calculating a next state.
+        - Having a state to check if the elevator is passing a floor or is moving between floors.
+    4. PBA has some work to be made on:
+        - Backup.go (In the documentation is said that it has to be restructured):
+          -  bugs in the mergeOrders loops.
+          -  redundant resets due to timeout handling.
+          -  race conditions for shared variables.
+          -  not clear the usage of fms.Version.
+       -  MasterElect.go:
+          -  function's logic commented, probably has to be restructured.
+       -  prim.go:
+          -  no mechanism to break out of the infinte loop.
+          -  no handling of edge cases for the peer update logic.
+          -  race conditions for shared variables.
+          -  wrong array indexing in part where the orders are sent to the backup.
+    5. timeidle.go 
+        - nicely implemented logic to find the elevator that should clear the request.
+        - the name is not self-explanatory.
+
+General Review:
+The project is generally well implemented. Has a solid logical structure for the elevator meant as an FSM, 
+a well structured network and some nice logics implemented to handle edge cases as well as some key tasks, like the requests assignement.
+However the Master-Slave logic has some work to be made on. The functions that constitute this scheme are confused and present
+a lack of error and edge cases handling and synchronization as well as several bugs.
+Regarding the design point of view there is a strong lack of comment for a code that not always presents intuitive names for the functions and
+clear logic implementations.
