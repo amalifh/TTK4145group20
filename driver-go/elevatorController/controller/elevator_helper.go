@@ -48,16 +48,3 @@ func IsIdle() bool {
 func GetDirection() ElevDirection {
 	return localCtrl.CurrentElevator.Direction
 }
-
-// DirectionConverter converts an elevator direction to a motor command.
-func DirectionConverter(dir ElevDirection) MotorDirection {
-	switch dir {
-	case ED_Up:
-		return MD_Up
-	case ED_Down:
-		return MD_Down
-	case ED_Stop:
-		return MD_Stop
-	}
-	return MD_Stop
-}

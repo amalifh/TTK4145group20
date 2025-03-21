@@ -21,16 +21,24 @@ func ElevatorHandler(drv_buttons <-chan types.ButtonEvent, drv_floors <-chan int
 		case btnEvent := <-drv_buttons:
 			fmt.Printf("Button Event: %+v\n", btnEvent)
 			localCtrl.OnRequestButtonPress(btnEvent.Floor, int(btnEvent.Button))
+
+			if localCtrl.CurrentElevator.Behaviour == types.EB_Moving {
+				driver.SetMotorDirection(localCtrl.DirectionConverter(localCtrl.CurrentElevator.Direction))
+			}
+
 			if IsDoorOpen() {
 				doorTimeoutCh = StartTimerChannel(doorTimer, types.DOOR_TIMEOUT_SEC)
 			}
 
 		// Floor sensor events.
 		case floor := <-drv_floors:
+			driver.SetFloorIndicator(floor)
 			fmt.Printf("Floor Arrival: %d\n", floor)
 			localCtrl.OnFloorArrival(floor)
 			if IsMoving() {
 				mobilityTimeoutCh = StartTimerChannel(mobilityTimer, types.MOBILITY_TIMEOUT_SEC)
+			} else {
+				driver.SetMotorDirection(types.MD_Stop)
 			}
 
 		// Obstruction events.
@@ -43,6 +51,7 @@ func ElevatorHandler(drv_buttons <-chan types.ButtonEvent, drv_floors <-chan int
 				if IsDoorOpen() {
 					doorTimeoutCh = StartTimerChannel(doorTimer, types.DOOR_TIMEOUT_SEC)
 				}
+				// driver.SetDoorOpenLamp(false)
 			}
 
 		// Door timeout event.
@@ -50,15 +59,22 @@ func ElevatorHandler(drv_buttons <-chan types.ButtonEvent, drv_floors <-chan int
 			doorTimeoutCh = nil
 			doorTimer.Stop()
 			fmt.Println("Door timer expired")
+			driver.SetDoorOpenLamp(false)
+
 			localCtrl.OnDoorTimeout()
+
+			mobilityTimer.Stop()
+			mobilityTimeoutCh = nil
+
 			if IsMoving() {
-				driver.SetDoorOpenLamp(false)
-				driver.SetMotorDirection(DirectionConverter(GetDirection()))
+				newDir := localCtrl.DirectionConverter(GetDirection())
+				driver.SetMotorDirection(newDir)
+				fmt.Printf("New direction: %v\n", newDir)
+				// Optionally, restart the mobility timer.
 				mobilityTimeoutCh = StartTimerChannel(mobilityTimer, types.MOBILITY_TIMEOUT_SEC)
-			} else if IsDoorOpen() {
-				doorTimeoutCh = StartTimerChannel(doorTimer, types.DOOR_TIMEOUT_SEC)
-			} else if IsIdle() {
-				driver.SetDoorOpenLamp(false)
+			} else {
+				fmt.Printf("No pending requests!")
+				driver.SetMotorDirection(types.MD_Stop)
 			}
 
 		// Mobility timeout event.

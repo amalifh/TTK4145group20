@@ -1,12 +1,12 @@
 /*
-
+ToDO:
+	- Timers are buggy
+	- Implement a confirmation message system
+	
 Point 2:
 The project has no clear acknowledgment system that confirms if an elevator has handled a request.
 Request states are tracked (NEW, ASSIGNED, COMPLETED), but there is no verification from other elevators that it has been handled.
 Our suggestion is to implement a confirmation message system of some sort, ensuring that once a request is completed, all elevators know about it.
-
-Bugs:
-	- The elevator doesn't move and doesn't turn off lights. (Fix FSM in localController -> Everthing's missing)
 
 Small fixes:
 	- In elevator-Main there are several references to functions in localController, but the parameters used when
