@@ -83,7 +83,7 @@ func ElevatorHandler(drv_buttons <-chan types.ButtonEvent, drv_floors <-chan int
 			mobilityTimer.Stop()
 			fmt.Println("Mobility timer expired")
 			localCtrl.OnMobilityTimeout()
-			driver.SetMotorDirection(types.MD_Stop)
+			driver.SetMotorDirection(types.MD_Stop) //How will it detect it can move again if it is set to stop?
 		}
 	}
 }
