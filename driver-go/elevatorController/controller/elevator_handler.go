@@ -14,6 +14,9 @@ func ElevatorHandler(drv_buttons <-chan types.ButtonEvent, drv_floors <-chan int
 	mobilityTimer := timer.NewTimer()
 	var doorTimeoutCh, mobilityTimeoutCh <-chan bool
 
+	// Initialize the elevator controller.
+	ElevatorStart()
+
 	// Main event loop.
 	for {
 		select {

@@ -48,3 +48,10 @@ func IsIdle() bool {
 func GetDirection() ElevDirection {
 	return localCtrl.CurrentElevator.Direction
 }
+
+// Sends the elevator to the bottom floor at startup.
+func ElevatorStart() {
+	localCtrl.CurrentElevator.Behaviour = EB_Moving
+	localCtrl.CurrentElevator.Direction = ED_Down
+	localCtrl.CurrentElevator.Floor = 0
+}
