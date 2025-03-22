@@ -1,40 +1,40 @@
 package fsm
 
 import (
-	"Exercise3/types"
+	"Exercise3/driver"
 	"Exercise3/requests"
 	"Exercise3/timer"
-	"fmt"
+	"Exercise3/types"
 )
 
-//starting of by just initializing the elevator
-var elevState = types.elevator_uninitialized()
+// starting of by just initializing the elevator
+var elevState = types.Elevator_uninitialized()
 
-//the whole point of this is to start the processes, having the functions actually working together!
-func setAllLights(e types.Elevator) {
+// the whole point of this is to start the processes, having the functions actually working together!
+func SetAllLights(e types.Elevator) {
 	for floor := 0; floor < types.N_floors; floor++ {
 		for btn := 0; btn < types.N_buttons; btn++ {
-			driver.SetButtonLamp(types.ButtonType(btn), floor, e.E_requests[floor][btn])
+			driver.SetButtonLamp(types.Button_type(btn), floor, e.E_requests[floor][btn])
 		}
 	}
 }
 
-func fsm_initBetweenFloors() {
+func Fsm_initBetweenFloors() {
 	driver.SetMotorDirection(types.Dirn_Down)
 	elevState.E_dirn = types.Dirn_Down
 	elevState.E_behaviour = types.EB_Moving
 }
 
-//function to how the elevator should handle button presses
-func fsm_requestButtonPress(btnFloor int, btnType types.Button_type) {
+// function to how the elevator should handle button presses
+func Fsm_requestButtonPress(btnFloor int, btnType types.Button_type) {
 	//if obstruction is on or stop is pressed the elevator is to do nothing
-	if (elevState.E_obstruction || elevState.E_stop) {
+	if elevState.E_obstruction || elevState.E_stop {
 		return
-	} 
+	}
 	switch elevState.E_behaviour {
 	case types.EB_DoorOpen:
-		if(request.requests_shouldClearImmediately(elevState, btnFloor, btnType)){
-			timer.timerStart(elevState.Config.doorOpen_s)
+		if requests.Requests_shouldClearImmediately(elevState, btnFloor, btnType) {
+			timer.TimerStart(elevState.E_config.DoorOpen_s)
 		} else {
 			elevState.E_requests[btnFloor][btnType] = true
 		}
@@ -43,27 +43,26 @@ func fsm_requestButtonPress(btnFloor int, btnType types.Button_type) {
 
 	case types.EB_idle:
 		elevState.E_requests[btnFloor][btnType] = true
-		pair := requests_chooseDirn(elevState)
-		elevState.E_dirn = pair.dp_dirn
-		elevState.E_behaviour = pair.behaviour
+		pair := requests.Requests_chooseDirn(elevState)
+		elevState.E_dirn = pair.Dp_dirn
+		elevState.E_behaviour = pair.Dp_behaviour
 
 		switch elevState.E_behaviour {
 		case types.EB_DoorOpen:
 			driver.SetDoorOpenLamp(true)
-			timer.timerStart(elevState.Config.doorOpen_s)
-			elevState = requests.requests_clearAtCurrentFloor(elevState)
-			
+			timer.TimerStart(elevState.E_config.DoorOpen_s)
+			elevState = requests.Requests_clearAtCurrentFloor(elevState)
+
 		case types.EB_Moving:
 			driver.SetMotorDirection(elevState.E_dirn)
-		
+
 		}
 
-
 	}
-	setAllLights(elevState)
+	SetAllLights(elevState)
 }
 
-func fsm_floorArrival(newFloor int) {
+func Fsm_floorArrival(newFloor int) {
 	elevState.E_floor = newFloor
 
 	driver.SetFloorIndicator(elevState.E_floor)
@@ -71,44 +70,44 @@ func fsm_floorArrival(newFloor int) {
 	//wanting to check if elevator should stop at the new floor when moving
 	switch elevState.E_behaviour {
 	case types.EB_Moving:
-		if requests.requests_shouldStop(elevState) {
+		if requests.Requests_shouldStop(elevState) {
 			driver.SetMotorDirection(types.Dirn_Stop)
 			driver.SetDoorOpenLamp(true)
-			elevState = requests.requests_clearAtCurrentFloor(elevState)
-			timer.timerStart(elevState.Config.doorOpen_s)
-			setAllLights(elevState)
+			elevState = requests.Requests_clearAtCurrentFloor(elevState)
+			timer.TimerStart(elevState.E_config.DoorOpen_s)
+			SetAllLights(elevState)
 			elevState.E_behaviour = types.EB_DoorOpen
 		}
 	}
 }
 
-func fsm_obstruction(obstructed bool) {
+func Fsm_obstruction(obstructed bool) {
 	if obstructed {
 		elevState.E_obstruction = true
 		switch elevState.E_behaviour {
 		case types.EB_DoorOpen:
 			driver.SetMotorDirection(types.Dirn_Stop)
 			driver.SetDoorOpenLamp(true)
-			setAllLights(elevState)
+			SetAllLights(elevState)
 		}
 	} else {
 		if elevState.E_obstruction {
-			setAllLights(elevState)
+			SetAllLights(elevState)
 			elevState.E_obstruction = false
 			if elevState.E_behaviour == types.EB_Moving {
-				driver.SetMotorDirection(elevState.Dirn)
+				driver.SetMotorDirection(elevState.E_dirn)
 			} else {
 				driver.SetDoorOpenLamp(true)
-				timer.TimerStart(elevState.Config.doorOpen_s)
+				timer.TimerStart(elevState.E_config.DoorOpen_s)
 			}
 		}
 	}
 }
 
-func fsm_stop() {
+func Fsm_stop() {
 	if !elevState.E_stop {
 		elevState.E_stop = true
-		driver.SetMotorDirection(elevator.D_Stop)
+		driver.SetMotorDirection(types.Dirn_Stop)
 		driver.SetStopLamp(true)
 	} else {
 		elevState.E_stop = false
@@ -116,28 +115,27 @@ func fsm_stop() {
 		if elevState.E_obstruction {
 			return
 		}
-		driver.SetMotorDirection(elevState.Dirn)
+		driver.SetMotorDirection(elevState.E_dirn)
 	}
 }
 
-func fsm_doorTimeout() {
+func Fsm_doorTimeout() {
 	switch elevState.E_behaviour {
 	case types.EB_DoorOpen:
-		pair := requests.requests_chooseDirn(elevState)
-		elevState.E_dirn = pair.dp_dirn
-		elevState.E_behaviour = pair.behaviour
+		pair := requests.Requests_chooseDirn(elevState)
+		elevState.E_dirn = pair.Dp_dirn
+		elevState.E_behaviour = pair.Dp_behaviour
 
 		switch elevState.E_behaviour {
 		case types.EB_DoorOpen:
-			timer.timerStart(elevState.Config.doorOpen_s)
-			elevState = requests_clearAtCurrentFloor(elevState)
-			setAllLights(elevState)
+			timer.TimerStart(elevState.E_config.DoorOpen_s)
+			elevState = requests.Requests_clearAtCurrentFloor(elevState)
+			SetAllLights(elevState)
 		case types.EB_idle, types.EB_Moving:
 			driver.SetDoorOpenLamp(false)
 			driver.SetMotorDirection(elevState.E_dirn)
 
 		}
-
 
 	}
 }

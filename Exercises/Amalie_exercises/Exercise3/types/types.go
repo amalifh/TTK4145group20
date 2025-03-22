@@ -44,7 +44,7 @@ const (
 
 type Config struct {
 	ClearRequestVariant ClearRequestVariant
-	doorOpen_s          float64
+	DoorOpen_s          float64
 }
 
 type Elevator struct {
@@ -57,10 +57,14 @@ type Elevator struct {
 	E_config      Config
 }
 
-func elevator_uninitialized() Elevator {
+func Elevator_uninitialized() Elevator {
 	return Elevator{
 		E_floor:     -1,
 		E_dirn:      Dirn_Stop,
 		E_behaviour: EB_idle,
+		E_config: Config{
+			ClearRequestVariant: CV_InDirn,
+			DoorOpen_s:          3,
+		},
 	}
 }
