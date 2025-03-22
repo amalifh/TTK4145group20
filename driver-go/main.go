@@ -2,7 +2,7 @@
 ToDO:
 	- Timers are buggy
 	- Implement a confirmation message system
-	
+
 Point 2:
 The project has no clear acknowledgment system that confirms if an elevator has handled a request.
 Request states are tracked (NEW, ASSIGNED, COMPLETED), but there is no verification from other elevators that it has been handled.
@@ -55,6 +55,8 @@ func main() {
 	go driver.PollFloorSensor(drv_floors)
 	go driver.PollObstructionSwitch(drv_obstr)
 	go driver.PollStopButton(drv_stop)
+
+	// driver.SetMotorDirection(types.MD_Down)
 
 	messageTx := make(chan types.NetworkMessage) // Outgoing messages
 	messageRx := make(chan types.NetworkMessage) // Incoming messages

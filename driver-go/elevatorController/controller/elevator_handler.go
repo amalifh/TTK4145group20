@@ -14,7 +14,7 @@ func ElevatorHandler(drv_buttons <-chan types.ButtonEvent, drv_floors <-chan int
 	mobilityTimer := timer.NewTimer()
 	var doorTimeoutCh, mobilityTimeoutCh <-chan bool
 
-	// Initialize the elevator controller.
+	// Send the elevator to the bottom floor.
 	ElevatorStart()
 
 	// Main event loop.
@@ -24,11 +24,11 @@ func ElevatorHandler(drv_buttons <-chan types.ButtonEvent, drv_floors <-chan int
 		case btnEvent := <-drv_buttons:
 			fmt.Printf("Button Event: %+v\n", btnEvent)
 			localCtrl.OnRequestButtonPress(btnEvent.Floor, int(btnEvent.Button))
-
-			if localCtrl.CurrentElevator.Behaviour == types.EB_Moving {
-				driver.SetMotorDirection(localCtrl.DirectionConverter(localCtrl.CurrentElevator.Direction))
-			}
-
+			/*
+				if localCtrl.CurrentElevator.Behaviour == types.EB_Moving {
+					driver.SetMotorDirection(localCtrl.DirectionConverter(localCtrl.CurrentElevator.Direction))
+				}
+			*/
 			if IsDoorOpen() {
 				doorTimeoutCh = StartTimerChannel(doorTimer, types.DOOR_TIMEOUT_SEC)
 			}

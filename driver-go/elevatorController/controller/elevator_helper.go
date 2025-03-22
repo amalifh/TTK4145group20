@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"Driver-go/elevator/driver"
 	. "Driver-go/elevator/types"
 	localCtrl "Driver-go/elevatorController/controller/localController"
 	"Driver-go/elevatorController/timer"
@@ -54,4 +55,5 @@ func ElevatorStart() {
 	localCtrl.CurrentElevator.Behaviour = EB_Moving
 	localCtrl.CurrentElevator.Direction = ED_Down
 	localCtrl.CurrentElevator.Floor = 0
+	driver.SetMotorDirection(MD_Down)
 }
