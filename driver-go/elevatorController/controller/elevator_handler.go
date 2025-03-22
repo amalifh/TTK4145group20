@@ -41,6 +41,7 @@ func ElevatorHandler(drv_buttons <-chan types.ButtonEvent, drv_floors <-chan int
 			if IsMoving() {
 				mobilityTimeoutCh = StartTimerChannel(mobilityTimer, types.MOBILITY_TIMEOUT_SEC)
 			} else {
+				mobilityTimer.Stop()
 				driver.SetMotorDirection(types.MD_Stop)
 			}
 
