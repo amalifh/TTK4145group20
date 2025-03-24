@@ -1,27 +1,26 @@
-/*request_assigner*/
 package requests
 
 import (
-	"driver-go/elevator/driver"
-	. "driver-go/elevator/types"
+	"Driver-go/elevator/driver"
+	"Driver-go/elevator/types"
 	"fmt"
 )
 
-func requestAssigner(
+func RequestAssigner(
 	id int,
-	bPressedCh chan ButtonEvent, // Button pressed
-	lUpdateCh chan [NumElevators]ElevInfo, // Lights update
+	bPressedCh chan types.ButtonEvent, // Button pressed
+	lUpdateCh chan [types.N_ELEVATORS]types.ElevInfo, // Lights update
 	completedRequestsCh chan int,
-	newRequestsCh chan ButtonEvent,
-	updatedRequestsCh chan ButtonEvent,
-	elevatorsCh chan ElevInfo,
-	updateSyncCh chan ElevInfo,
-	assignerUpdatesCh chan [N_ELEVATORS]ElevInfo,
-	aliveElevatorsCh chan [N_ELEVATORS]bool) {
+	newRequestsCh chan types.ButtonEvent,
+	elevatorsCh chan types.ElevInfo,
+	updatedRequestsCh chan types.ButtonEvent,
+	updateSyncCh chan types.ElevInfo,
+	assignerUpdatesCh chan [types.N_ELEVATORS]types.ElevInfo,
+	aliveElevatorsCh chan [types.N_ELEVATORS]bool) {
 	var (
-		elevList          [N_ELEVATORS]ElevInfo
-		aliveList         [N_ELEVATORS]bool
-		completedRequests ButtonEvent
+		elevList          [types.N_ELEVATORS]types.ElevInfo
+		aliveList         [types.N_ELEVATORS]bool
+		completedRequests types.ButtonEvent
 	)
 	for {
 		select {
@@ -33,7 +32,7 @@ func requestAssigner(
 				go func() { newRequestsCh <- newLocalRequest }()
 
 				// If the elevator is not alive, and the request is not a cab request, do nothing
-			} else if !onlineList[id] && newLocalRequest.Btn != types.BT_Cab {
+			} else if !aliveList[id] && newLocalRequest.Btn != types.BT_Cab {
 				continue
 				// In any other case the request should be assigned to the best elevator
 			} else {
@@ -42,27 +41,27 @@ func requestAssigner(
 				} else {
 					if !duplicateRequest(newLocalRequest, elevList, id) {
 						fmt.Println("New request at floor ", newLocalRequest.Floor+1, " for button ", newLocalRequest.Btn)
-						newLocalRequest.ChosenElevator = calcChosenElevator(newLocalRequest, elevList, id, onlineList)
+						newLocalRequest.ChosenElevator = calcChosenElevator(newLocalRequest, elevList, id, aliveList)
 						updatedRequestsCh <- newLocalRequest
 					}
 				}
 			}
 
-		case completedRequest.Floor = <-completedRequestsCh:
-			completedRequest.Done = true
-			for btn := types.BT_Up; btn < N_BUTTONS; btn++ {
-				if elevList[id].RequestsQueue[completedRequest.Floor][btn] {
-					completedRequest.Btn = btn
+		case completedRequests.Floor = <-completedRequestsCh:
+			completedRequests.Done = true
+			for btn := types.BT_Up; btn < types.N_BUTTONS; btn++ {
+				if elevList[id].RequestsQueue[completedRequests.Floor][btn] {
+					completedRequests.Btn = btn
 				}
-				for elevator := 0; elevator < N_ELEVATORS; elevator++ {
+				for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
 					if btn != types.BT_Cab || elevator == id {
-						elevList[elevator].RequestsQueue[completedRequest.Floor][btn] = false
+						elevList[elevator].RequestsQueue[completedRequests.Floor][btn] = false
 					}
 				}
 			}
 
 			if aliveList[id] {
-				updatedRequestsCh <- completedRequest
+				updatedRequestsCh <- completedRequests
 			}
 			lUpdateCh <- elevList
 
@@ -82,7 +81,7 @@ func requestAssigner(
 
 		case tmpElevList := <-assignerUpdatesCh:
 			newRequest := false
-			for elevator := 0; elevator < N_ELEVATORS; elevator++ {
+			for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
 				if elevator == id {
 					continue
 				}
@@ -92,16 +91,16 @@ func requestAssigner(
 				elevList[elevator] = tmpElevList[elevator]
 			}
 
-			for floor := 0; floor < N_FLOORS; floor++ {
-				for btn := types.BT_Up; btn < N_BUTTONS; btn++ {
+			for floor := 0; floor < types.N_FLOORS; floor++ {
+				for btn := types.BT_Up; btn < types.N_BUTTONS; btn++ {
 					if tmpElevList[id].RequestsQueue[floor][btn] && !elevList[id].RequestsQueue[floor][btn] {
 						elevList[id].RequestsQueue[floor][btn] = true
-						request := ButtonEvent{Floor: floor, Btn: btn, ChosenElevator: id, Done: false}
+						request := types.ButtonEvent{Floor: floor, Btn: btn, ChosenElevator: id, Done: false}
 						go func() { newRequestsCh <- request }()
 						newRequest = true
 					} else if !tmpElevList[id].RequestsQueue[floor][btn] && elevList[id].RequestsQueue[floor][btn] {
 						elevList[id].RequestsQueue[floor][btn] = false
-						request := ButtonEvent{Floor: floor, Btn: btn, ChosenElevator: id, Done: true}
+						request := types.ButtonEvent{Floor: floor, Btn: btn, ChosenElevator: id, Done: true}
 						go func() { newRequestsCh <- request }()
 						newRequest = true
 					}
@@ -115,26 +114,26 @@ func requestAssigner(
 	}
 }
 
-func lightsUpdater(lUpdateCh <-chan [N_ELEVATORS]ElevInfo, id int) {
-	var RequestExists [N_ELEVATORS]bool
+func LightsUpdater(lUpdateCh <-chan [types.N_ELEVATORS]types.ElevInfo, id int) {
+	var RequestExists [types.N_ELEVATORS]bool
 
 	for {
 		elevs := <-lUpdateCh
-		for floor := 0; floor < N_FLOORS; floor++ {
-			for btn := tpyes.BT_Up; btn < N_BUTTONS; btn++ {
-				for elevator := 0; elevator < N_ELEVATORS; elevator++ {
+		for floor := 0; floor < types.N_FLOORS; floor++ {
+			for btn := types.BT_Up; btn < types.N_BUTTONS; btn++ {
+				for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
 					RequestExists[elevator] = false
 					if elevator != id && btn == types.BT_Cab {
 						// Ignore inside Requests for other elevators
 						continue
 					}
 					if elevs[elevator].RequestsQueue[floor][btn] {
-						driver.SetButtonLamp(btn, floor, 1)
+						driver.SetButtonLamp(btn, floor, true)
 						RequestExists[elevator] = true
 					}
 				}
-				if RequestExists == [N_ELEVATORS]bool{} {
-					driver.SetButtonLamp(btn, floor, 0)
+				if RequestExists == [types.N_ELEVATORS]bool{} {
+					driver.SetButtonLamp(btn, floor, false)
 				}
 			}
 		}

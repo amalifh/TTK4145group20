@@ -1,14 +1,14 @@
-package elevatorStateMachine
+package controller
 
 import (
 	"Driver-go/elevator/types"
 )
 
-func shouldStop(elevator ElevInfo) bool {
+func shouldStop(elevator types.ElevInfo) bool {
 	switch elevator.Dir {
 	case types.ED_Up:
-		return elevator.Queue[elevator.Floor][BtnUp] ||
-			elevator.Queue[elevator.Floor][BtnInside] ||
+		return elevator.RequestsQueue[elevator.Floor][types.BT_Up] ||
+			elevator.RequestsQueue[elevator.Floor][types.BT_Cab] ||
 			!isRequestAbove(elevator)
 	case types.ED_Down:
 		return elevator.RequestsQueue[elevator.Floor][types.BT_Down] ||
@@ -20,30 +20,30 @@ func shouldStop(elevator ElevInfo) bool {
 	return false
 }
 
-func chooseDirection(elevator Elev) Direction {
+func chooseDirection(elevator types.ElevInfo) types.ElevDirection {
 	switch elevator.Dir {
 	case types.ED_Stop:
-		if ordersAbove(elevator) {
+		if isRequestAbove(elevator) {
 			return types.ED_Up
-		} else if ordersBelow(elevator) {
+		} else if isRequestBelow(elevator) {
 			return types.ED_Down
 		} else {
 			return types.ED_Stop
 		}
 
 	case types.ED_Up:
-		if ordersAbove(elevator) {
+		if isRequestAbove(elevator) {
 			return types.ED_Up
-		} else if ordersBelow(elevator) {
+		} else if isRequestBelow(elevator) {
 			return types.ED_Down
 		} else {
 			return types.ED_Stop
 		}
 
 	case types.ED_Down:
-		if ordersBelow(elevator) {
+		if isRequestBelow(elevator) {
 			return types.ED_Down
-		} else if ordersAbove(elevator) {
+		} else if isRequestAbove(elevator) {
 			return types.ED_Up
 		} else {
 			return types.ED_Stop
@@ -52,10 +52,22 @@ func chooseDirection(elevator Elev) Direction {
 	return types.ED_Stop
 }
 
-func isRequestAbove(elevator Elev) bool {
-	for floor := elevator.Floor + 1; floor < NumFloors; floor++ {
-		for btn := 0; btn < NumButtons; btn++ {
-			if elevator.Queue[floor][btn] {
+func DirectionConverter(dir types.ElevDirection) types.MotorDirection {
+	switch dir {
+	case types.ED_Up:
+		return types.MD_Up
+	case types.ED_Down:
+		return types.MD_Down
+	case types.ED_Stop:
+		return types.MD_Stop
+	}
+	return types.MD_Stop
+}
+
+func isRequestAbove(elevator types.ElevInfo) bool {
+	for floor := elevator.Floor + 1; floor < types.N_FLOORS; floor++ {
+		for btn := 0; btn < types.N_BUTTONS; btn++ {
+			if elevator.RequestsQueue[floor][btn] {
 				return true
 			}
 		}
@@ -63,10 +75,10 @@ func isRequestAbove(elevator Elev) bool {
 	return false
 }
 
-func isRequestBelow(elevator Elev) bool {
+func isRequestBelow(elevator types.ElevInfo) bool {
 	for floor := 0; floor < elevator.Floor; floor++ {
-		for btn := 0; btn < NumButtons; btn++ {
-			if elevator.Queue[floor][btn] {
+		for btn := 0; btn < types.N_BUTTONS; btn++ {
+			if elevator.RequestsQueue[floor][btn] {
 				return true
 			}
 		}
@@ -81,16 +93,11 @@ func clearRequestsAtCurrentFloor(e types.ElevInfo) types.ElevInfo {
 			e.RequestsQueue[e.Floor][btn] = false
 		}
 	case types.CV_InDirn:
-		// Always clear the cab button.
 		e.RequestsQueue[e.Floor][types.BT_Cab] = false
 
-		// Instead of conditionally clearing hall buttons based on direction,
-		// clear both hall requests to ensure that no pending requests remain.
 		e.RequestsQueue[e.Floor][types.BT_Up] = false
 		e.RequestsQueue[e.Floor][types.BT_Down] = false
 
-		// (Optionally, if some directional filtering is desired in other contexts,
-		// additional logic can be added here—but for clearing at the floor, it's safer to clear both.)
 	}
 	return e
 }

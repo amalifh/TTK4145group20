@@ -8,71 +8,68 @@ import (
 	"strconv"
 	"time"
 
-	"driver-go/controller"
-	"driver-go/elevator/driver"
-	. "driver-go/elevator/types"
-	"driver-go/network/bcast"
-	"driver-go/network/peers"
-	"driver-go/requests"
-	"driver-go/sync"
+	"Driver-go/controller"
+	"Driver-go/elevator/driver"
+	"Driver-go/elevator/types"
+	"Driver-go/network/bcast"
+	"Driver-go/network/peers"
+	"Driver-go/requests"
+	"Driver-go/sync"
 )
 
 func main() {
 	var (
-		runType string
-		id      string
-		e       driver.Elev_type
+		// e       driver.Elev_type
 		ID      int
-		simPort string
+		addr string
+		sID string
 	)
 
-	/*
-		flag.StringVar(&runType, "run", "", "run type")
-		flag.StringVar(&id, "id", "0", "id of this peer")
-		flag.StringVar(&simPort, "simPort", "44523", "simulation server port")
-		flag.Parse()
-		ID, _ = strconv.Atoi(id)
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: <program> <port> <id>")
+		return
+	}
+	addr = os.Args[1]
+	sID = os.Args[2]
+	addr = "localhost:" + addr
+	ID, _ = strconv.Atoi(sID)
 
-		if runType == "sim" {
-			e = hw.ET_Simulation
-			fmt.Println("Running in simulation mode!")
-		}
-	*/
-
-	contollerChans := controller.fsmChannels{
-		OrderComplete:  make(chan int),
-		Elevator:       make(chan ElevInfo),
-		NewOrder:       make(chan ButtonEvent),
+	controllerChans := controller.FsmChannels{
+		RequestsComplete:  make(chan int),
+		Elevator:       make(chan types.ElevInfo),
+		NewRequest:       make(chan types.ButtonEvent),
 		ArrivedAtFloor: make(chan int),
 	}
 
 	syncChans := sync.SyncChannels{
-		UpdateGovernor:  make(chan [N_ELEVATORS]ElevInfo),
-		UpdateSync:      make(chan ElevInfo),
-		OrderUpdate:     make(chan Keypress),
-		OnlineElevators: make(chan [N_ELEVATORS]bool),
-		IncomingMsg:     make(chan Message),
-		OutgoingMsg:     make(chan Message),
+		UpdateReqAssigner:  make(chan [types.N_ELEVATORS]types.ElevInfo),
+		UpdateSync:      make(chan types.ElevInfo),
+		RequestsUpdate:     make(chan types.ButtonEvent),
+		AliveElevators: make(chan [types.N_ELEVATORS]bool),
+		IncomingMsg:     make(chan types.NetworkMessage),
+		OutgoingMsg:     make(chan types.NetworkMessage),
 		PeerUpdate:      make(chan peers.PeerUpdate),
 		PeerTxEnable:    make(chan bool),
 	}
 	var (
-		btnsPressedChan = make(chan ButtonEvent)
-		lightUpdateChan = make(chan [types.N_ELEVATORS]ElevInfo)
+		btnsPressedChan = make(chan types.ButtonEvent)
+		lightUpdateChan = make(chan [types.N_ELEVATORS]types.ElevInfo)
+		obstructionChan = make(chan bool)
 	)
 
-	driver.Init("localhost:"+simPort, N_FLOORS)
+	driver.Init(addr, types.N_FLOORS)
 
-	go driver.ButtonPoller(btnsPressedChan)
-	go driver.FloorIndicatorLoop(esmChans.ArrivedAtFloor)
-	go controller.RunElevator(esmChans)
-	go requests.requestAssigner(ID, btnsPressedChan, lightUpdateChan, esmChans.OrderComplete, esmChans.NewOrder, esmChans.Elevator,
-		syncChans.OrderUpdate, syncChans.UpdateSync, syncChans.UpdateGovernor, syncChans.OnlineElevators)
-	go requests.lightsUpdater(lightUpdateChan, ID)
+	go driver.PollButtons(btnsPressedChan)
+	go driver.PollFloorSensor(controllerChans.ArrivedAtFloor)
+	go driver.PollObstructionSwitch(obstructionChan)
+	go controller.ElevatorHandler(controllerChans)
+	go requests.RequestAssigner(ID, btnsPressedChan, lightUpdateChan, controllerChans.RequestsComplete, controllerChans.NewRequest, controllerChans.Elevator, 
+		syncChans.RequestsUpdate, syncChans.UpdateSync, syncChans.UpdateReqAssigner, syncChans.AliveElevators)
+	go requests.LightsUpdater(lightUpdateChan, ID)
 	go sync.Synchronise(syncChans, ID)
 	go bcast.Transmitter(42034, syncChans.OutgoingMsg)
 	go bcast.Receiver(42034, syncChans.IncomingMsg)
-	go peers.Transmitter(42035, id, syncChans.PeerTxEnable)
+	go peers.Transmitter(42035, sID, syncChans.PeerTxEnable)
 	go peers.Receiver(42035, syncChans.PeerUpdate)
 	go killSwitch()
 
@@ -89,9 +86,9 @@ func killSwitch() {
 	for i := 0; i < 10; i++ {
 		driver.SetMotorDirection(types.MD_Stop)
 		if i%2 == 0 {
-			driver.SetStopLamp(1)
+			driver.SetStopLamp(true)
 		} else {
-			driver.SetStopLamp(0)
+			driver.SetStopLamp(false)
 		}
 		time.Sleep(200 * time.Millisecond)
 	}

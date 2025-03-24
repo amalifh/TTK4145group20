@@ -1,14 +1,16 @@
 /*request_utilities*/
 package requests
 
-import . "driver-go/elevator/types"
+import (
+	"Driver-go/elevator/types"
+)
 
 // DuplicateRequest checks if the request is already in the queue
-func duplicateRequest(request ButtonEvent, elevList [N_ELEVATORS]ElevInfo, id int) bool {
+func duplicateRequest(request types.ButtonEvent, elevList [types.N_ELEVATORS]types.ElevInfo, id int) bool {
 	if request.Btn == types.BT_Cab && elevList[id].RequestsQueue[request.Floor][types.BT_Cab] {
 		return true
 	}
-	for elevator := 0; elevator < N_ELEVATORS; elevator++ {
+	for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
 		if elevList[id].RequestsQueue[request.Floor][request.Btn] {
 			return true
 		}
@@ -18,14 +20,14 @@ func duplicateRequest(request ButtonEvent, elevList [N_ELEVATORS]ElevInfo, id in
 
 // CalcChosenElevator calculates the best elevator to handle the request
 // based on the current state of the elevators
-func calcChosenElevator(request ButtonEvent, elevList [N_ELEVATORS]ElevInfo, id int, aliveList [N_ELEVATORS]bool) int {
+func calcChosenElevator(request types.ButtonEvent, elevList [types.N_ELEVATORS]types.ElevInfo, id int, aliveList [types.N_ELEVATORS]bool) int {
 	if request.Btn == types.BT_Cab {
 		return id
 	}
 
-	minCost := (N_BUTTONS * N_FLOORS) * N_ELEVATORS
+	minCost := (types.N_BUTTONS * types.N_FLOORS) * types.N_ELEVATORS
 	bestElevator := id
-	for elevator := 0; elevator < N_ELEVATORS; elevator++ {
+	for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
 		if !aliveList[elevator] {
 			// Disregarding offline elevators
 			continue
