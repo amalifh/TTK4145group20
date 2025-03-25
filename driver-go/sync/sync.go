@@ -103,7 +103,7 @@ func Synchronise(ch SyncChannels, id int) {
 				if newRequest.Btn != types.BT_Cab {
 					registeredRequests[newRequest.Floor][types.BT_Up].ImplicitAcks[id] = types.COMPLETED
 					registeredRequests[newRequest.Floor][types.BT_Down].ImplicitAcks[id] = types.COMPLETED
-					fmt.Println("We Finished Request", newRequest.Btn, "at floor", newRequest.Floor+1)
+					fmt.Println("Completed Request", newRequest.Btn, "at floor", newRequest.Floor)
 				}
 			} else {
 				if newRequest.Btn == types.BT_Cab {
@@ -112,7 +112,7 @@ func Synchronise(ch SyncChannels, id int) {
 				} else {
 					registeredRequests[newRequest.Floor][newRequest.Btn].ChosenElevator = newRequest.ChosenElevator
 					registeredRequests[newRequest.Floor][newRequest.Btn].ImplicitAcks[id] = types.ACK
-					fmt.Println("We acknowledged a new Request", newRequest.Btn, "at floor", newRequest.Floor+1)
+					fmt.Println("New Request ACK", newRequest.Btn, "at floor", newRequest.Floor)
 					fmt.Println("\tdesignated to", registeredRequests[newRequest.Floor][newRequest.Btn].ChosenElevator)
 				}
 			}
@@ -143,7 +143,6 @@ func Synchronise(ch SyncChannels, id int) {
 
 							case types.ACK:
 								if registeredRequests[floor][btn].ImplicitAcks[id] == types.NOTACK {
-									fmt.Println("Request ", btn, "from ", msg.ID, "in floor", floor+1, "has been acked!")
 									registeredRequests = copyAckList(msg, registeredRequests, elevator, floor, id, btn)
 								} else if registeredRequests[floor][btn].ImplicitAcks[elevator] != types.ACK {
 									registeredRequests[floor][btn].ImplicitAcks[elevator] = types.ACK
@@ -151,7 +150,6 @@ func Synchronise(ch SyncChannels, id int) {
 								if checkAllAckStatus(aliveList, registeredRequests[floor][btn].ImplicitAcks, types.ACK) &&
 									!elevList[id].RequestsQueue[floor][btn] &&
 									registeredRequests[floor][btn].ChosenElevator == id {
-									fmt.Println("We've been assigned a new request!")
 									elevList[id].RequestsQueue[floor][btn] = true
 									someUpdate = true
 								}
@@ -187,7 +185,6 @@ func Synchronise(ch SyncChannels, id int) {
 				for btn := types.BT_Up; btn < types.BT_Cab; btn++ {
 					if registeredRequests[floor][btn].ImplicitAcks[id] == types.ACK &&
 						!elevList[id].RequestsQueue[floor][btn] {
-						fmt.Println("We've been assigned a new request!")
 						elevList[id].RequestsQueue[floor][btn] = true
 						someUpdate = true
 					}

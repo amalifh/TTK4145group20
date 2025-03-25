@@ -1,9 +1,5 @@
 package controller
 
-/*
-	- Direction conversion needed (elevator_utilities.go)
-*/
-
 import (
 	"Driver-go/elevator/driver"
 	"Driver-go/elevator/types"
@@ -21,6 +17,7 @@ type FsmChannels struct {
 	Elevator         chan types.ElevInfo
 	NewRequest       chan types.ButtonEvent
 	ArrivedAtFloor   chan int
+	ObstructionChan  chan bool
 }
 
 // ElevatorHandler manages the elevator's behavior and state.
@@ -30,6 +27,7 @@ func ElevatorHandler(ch FsmChannels) {
 		Dir:           types.ED_Stop,
 		Floor:         driver.GetFloor(),
 		RequestsQueue: [types.N_FLOORS][types.N_BUTTONS]bool{},
+		CV:            types.CV_All, // Should we pass it as a parameter?
 	}
 
 	// Create the timers
@@ -38,6 +36,8 @@ func ElevatorHandler(ch FsmChannels) {
 	doorTimer.Stop()
 	mobilityTimer.Stop()
 	requestCleared := false
+	obstructionActive := false
+	pendingStop := false
 	ch.Elevator <- elevator
 
 	// Main event loop
@@ -83,8 +83,23 @@ func ElevatorHandler(ch FsmChannels) {
 			ch.Elevator <- elevator
 
 		case elevator.Floor = <-ch.ArrivedAtFloor:
-			fmt.Println("Arrived at floor", elevator.Floor+1)
-			if shouldStop(elevator) ||
+			fmt.Println("Arrived at floor", elevator.Floor)
+			if pendingStop {
+				pendingStop = false
+				driver.SetDoorOpenLamp(true)
+				mobilityTimer.Stop()
+				elevator.State = types.EB_DoorOpen
+				// Ensure motor is stopped.
+				driver.SetMotorDirection(types.MD_Stop)
+				doorTimer.Reset(DOOR_OPEN_TIME)
+				elevator = clearRequests(elevator, elevator.Floor)
+				go func() { ch.RequestsComplete <- elevator.Floor }()
+			} else if obstructionActive {
+				// When an obstruction is active, simply maintain door open.
+				driver.SetDoorOpenLamp(true)
+				doorTimer.Reset(DOOR_OPEN_TIME)
+				elevator.State = types.EB_DoorOpen
+			}else if shouldStop(elevator) ||
 				(!shouldStop(elevator) && elevator.RequestsQueue == [types.N_FLOORS][types.N_BUTTONS]bool{} && requestCleared) {
 				requestCleared = false
 				driver.SetDoorOpenLamp(true)
@@ -92,7 +107,7 @@ func ElevatorHandler(ch FsmChannels) {
 				elevator.State = types.EB_DoorOpen
 				driver.SetMotorDirection(types.MD_Stop)
 				doorTimer.Reset(DOOR_OPEN_TIME)
-				elevator.RequestsQueue[elevator.Floor] = [types.N_BUTTONS]bool{}
+				elevator = clearRequests(elevator, elevator.Floor)
 				go func() { ch.RequestsComplete <- elevator.Floor }()
 
 			} else if elevator.State == types.EB_Moving {
@@ -100,49 +115,85 @@ func ElevatorHandler(ch FsmChannels) {
 			}
 			ch.Elevator <- elevator
 
-		/*
-			Obstruction events - Fix this
-			case obstructed := <-drv_obstr:
-				fmt.Printf("Obstruction Event: %+v\n", obstructed)
-				if localCtrl.OnObstruction(obstructed) {
-					doorTimer.Stop()
-					doorTimeoutCh = nil
-				} else {
-					if IsDoorOpen() {
-						doorTimeoutCh = StartTimerChannel(doorTimer, types.DOOR_TIMEOUT_SEC)
+		// Not working
+		case obstructed := <-ch.ObstructionChan:
+			fmt.Printf("Obstruction Event: %+v\n", obstructed)
+			if obstructed {
+				// Set the obstruction flag.
+				obstructionActive = true
+				// If the elevator is moving, check if it's between floors.
+				if elevator.State == types.EB_Moving {
+					if driver.GetFloor() == -1 {
+						// Elevator is between floors; set pending stop.
+						pendingStop = true
+						// Let the elevator continue moving.
+					} else {
+						// Elevator is at a valid floor; stop immediately.
+						driver.SetMotorDirection(types.MD_Stop)
+						driver.SetDoorOpenLamp(true)
+						elevator.State = types.EB_DoorOpen
+						doorTimer.Reset(DOOR_OPEN_TIME)
+						mobilityTimer.Stop()
+						elevator = clearRequests(elevator, elevator.Floor)
+						go func() { ch.RequestsComplete <- elevator.Floor }()
 					}
-					// driver.SetDoorOpenLamp(false)
+				} else if elevator.State == types.EB_DoorOpen {
+					// Already stopped with doors open; ensure door remains open.
+					driver.SetDoorOpenLamp(true)
+					doorTimer.Reset(DOOR_OPEN_TIME)
 				}
-		*/
-
-		case <-doorTimer.C:
-			driver.SetDoorOpenLamp(false)
-			elevator.Dir = chooseDirection(elevator)
-			if elevator.Dir == types.ED_Stop {
-				elevator.State = types.EB_Idle
-				mobilityTimer.Stop()
 			} else {
-				elevator.State = types.EB_Moving
-				mobilityTimer.Reset(MOBILITY_TIMEOUT)
-				driver.SetMotorDirection(DirectionConverter(elevator.Dir))
+				// Obstruction cleared.
+				obstructionActive = false
+				// If we are in door-open state and no pending stop, close door and resume normal operation.
+				if elevator.State == types.EB_DoorOpen {
+					doorTimer.Stop()
+					driver.SetDoorOpenLamp(false)
+					elevator.Dir = chooseDirection(elevator)
+					if elevator.Dir == types.ED_Stop {
+						elevator.State = types.EB_Idle
+						mobilityTimer.Stop()
+					} else {
+						elevator.State = types.EB_Moving
+						mobilityTimer.Reset(MOBILITY_TIMEOUT)
+						driver.SetMotorDirection(DirectionConverter(elevator.Dir))
+					}
+				}
 			}
 			ch.Elevator <- elevator
 
-		case <-mobilityTimer.C:
-			driver.SetMotorDirection(types.MD_Stop)
-			elevator.State = types.EB_Undefined
-			fmt.Println("\x1b[1;1;33m", "Engine Error - Go offline", "\x1b[0m")
-			for i := 0; i < 10; i++ {
-				if i%2 == 0 {
-					driver.SetStopLamp(true)
-				} else {
-					driver.SetStopLamp(false)
+			case <-doorTimer.C:
+				if obstructionActive {
+					doorTimer.Reset(DOOR_OPEN_TIME)
+					break
 				}
-				time.Sleep(time.Millisecond * 200)
-			}
-			driver.SetMotorDirection(DirectionConverter(elevator.Dir))
-			ch.Elevator <- elevator
-			mobilityTimer.Reset(MOBILITY_TIMEOUT)
+				driver.SetDoorOpenLamp(false)
+				elevator.Dir = chooseDirection(elevator)
+				if elevator.Dir == types.ED_Stop {
+					elevator.State = types.EB_Idle
+					mobilityTimer.Stop()
+				} else {
+					elevator.State = types.EB_Moving
+					mobilityTimer.Reset(MOBILITY_TIMEOUT)
+					driver.SetMotorDirection(DirectionConverter(elevator.Dir))
+				}
+				ch.Elevator <- elevator
+
+			case <-mobilityTimer.C:
+				driver.SetMotorDirection(types.MD_Stop)
+				elevator.State = types.EB_Undefined
+				fmt.Println("\x1b[1;1;33m", "Engine Error - Go offline", "\x1b[0m")
+				for i := 0; i < 10; i++ {
+					if i%2 == 0 {
+						driver.SetStopLamp(true)
+					} else {
+						driver.SetStopLamp(false)
+					}
+					time.Sleep(time.Millisecond * 200)
+				}
+				driver.SetMotorDirection(DirectionConverter(elevator.Dir))
+				ch.Elevator <- elevator
+				mobilityTimer.Reset(MOBILITY_TIMEOUT)
 		}
 	}
 }

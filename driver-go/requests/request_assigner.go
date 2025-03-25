@@ -40,7 +40,7 @@ func RequestAssigner(
 					newRequestsCh <- newLocalRequest
 				} else {
 					if !duplicateRequest(newLocalRequest, elevList, id) {
-						fmt.Println("New request at floor ", newLocalRequest.Floor+1, " for button ", newLocalRequest.Btn)
+						fmt.Println("New request at floor ", newLocalRequest.Floor, " for button ", newLocalRequest.Btn)
 						newLocalRequest.ChosenElevator = calcChosenElevator(newLocalRequest, elevList, id, aliveList)
 						updatedRequestsCh <- newLocalRequest
 					}

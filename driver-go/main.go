@@ -1,7 +1,6 @@
 package main
 
 import (
-	//"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -19,10 +18,9 @@ import (
 
 func main() {
 	var (
-		// e       driver.Elev_type
-		ID      int
+		ID   int
 		addr string
-		sID string
+		sID  string
 	)
 
 	if len(os.Args) < 3 {
@@ -35,35 +33,35 @@ func main() {
 	ID, _ = strconv.Atoi(sID)
 
 	controllerChans := controller.FsmChannels{
-		RequestsComplete:  make(chan int),
-		Elevator:       make(chan types.ElevInfo),
+		RequestsComplete: make(chan int),
+		Elevator:         make(chan types.ElevInfo),
 		NewRequest:       make(chan types.ButtonEvent),
-		ArrivedAtFloor: make(chan int),
+		ArrivedAtFloor:   make(chan int),
+		ObstructionChan:  make(chan bool),
 	}
 
 	syncChans := sync.SyncChannels{
-		UpdateReqAssigner:  make(chan [types.N_ELEVATORS]types.ElevInfo),
-		UpdateSync:      make(chan types.ElevInfo),
-		RequestsUpdate:     make(chan types.ButtonEvent),
-		AliveElevators: make(chan [types.N_ELEVATORS]bool),
-		IncomingMsg:     make(chan types.NetworkMessage),
-		OutgoingMsg:     make(chan types.NetworkMessage),
-		PeerUpdate:      make(chan peers.PeerUpdate),
-		PeerTxEnable:    make(chan bool),
+		UpdateReqAssigner: make(chan [types.N_ELEVATORS]types.ElevInfo),
+		UpdateSync:        make(chan types.ElevInfo),
+		RequestsUpdate:    make(chan types.ButtonEvent),
+		AliveElevators:    make(chan [types.N_ELEVATORS]bool),
+		IncomingMsg:       make(chan types.NetworkMessage),
+		OutgoingMsg:       make(chan types.NetworkMessage),
+		PeerUpdate:        make(chan peers.PeerUpdate),
+		PeerTxEnable:      make(chan bool),
 	}
 	var (
 		btnsPressedChan = make(chan types.ButtonEvent)
 		lightUpdateChan = make(chan [types.N_ELEVATORS]types.ElevInfo)
-		obstructionChan = make(chan bool)
 	)
 
 	driver.Init(addr, types.N_FLOORS)
 
 	go driver.PollButtons(btnsPressedChan)
 	go driver.PollFloorSensor(controllerChans.ArrivedAtFloor)
-	go driver.PollObstructionSwitch(obstructionChan)
+	go driver.PollObstructionSwitch(controllerChans.ObstructionChan)
 	go controller.ElevatorHandler(controllerChans)
-	go requests.RequestAssigner(ID, btnsPressedChan, lightUpdateChan, controllerChans.RequestsComplete, controllerChans.NewRequest, controllerChans.Elevator, 
+	go requests.RequestAssigner(ID, btnsPressedChan, lightUpdateChan, controllerChans.RequestsComplete, controllerChans.NewRequest, controllerChans.Elevator,
 		syncChans.RequestsUpdate, syncChans.UpdateSync, syncChans.UpdateReqAssigner, syncChans.AliveElevators)
 	go requests.LightsUpdater(lightUpdateChan, ID)
 	go sync.Synchronise(syncChans, ID)

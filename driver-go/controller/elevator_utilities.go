@@ -2,6 +2,7 @@ package controller
 
 import (
 	"Driver-go/elevator/types"
+	"sort"
 )
 
 func shouldStop(elevator types.ElevInfo) bool {
@@ -86,18 +87,10 @@ func isRequestBelow(elevator types.ElevInfo) bool {
 	return false
 }
 
-func clearRequestsAtCurrentFloor(e types.ElevInfo) types.ElevInfo {
-	switch e.CV {
-	case types.CV_All:
-		for btn := 0; btn < types.N_BUTTONS; btn++ {
-			e.RequestsQueue[e.Floor][btn] = false
-		}
-	case types.CV_InDirn:
-		e.RequestsQueue[e.Floor][types.BT_Cab] = false
 
-		e.RequestsQueue[e.Floor][types.BT_Up] = false
-		e.RequestsQueue[e.Floor][types.BT_Down] = false
+/*
+https://github.com/TTK4145/Project-resources/tree/master/elev_algo
+func clearRequests(elevator types.ElevInfo, startingFloor int) types.ElevInfo {
 
-	}
-	return e
 }
+*/
