@@ -2,7 +2,6 @@ package controller
 
 import (
 	"Driver-go/elevator/types"
-	"sort"
 )
 
 func shouldStop(elevator types.ElevInfo) bool {
@@ -87,10 +86,41 @@ func isRequestBelow(elevator types.ElevInfo) bool {
 	return false
 }
 
+func clearRequests(elevator types.ElevInfo, floor int) types.ElevInfo {
+	switch elevator.CV {
+	case types.CV_All:
+		// Clear all buttons at the current floor
+		for btn := 0; btn < types.N_BUTTONS; btn++ {
+			elevator.RequestsQueue[floor][btn] = false
+		}
+	case types.CV_InDirn:
+		// Always clear Cab request
+		elevator.RequestsQueue[floor][types.BT_Cab] = false
 
-/*
-https://github.com/TTK4145/Project-resources/tree/master/elev_algo
-func clearRequests(elevator types.ElevInfo, startingFloor int) types.ElevInfo {
+		switch elevator.Dir {
+		case types.ED_Up:
+			// Check if no requests above and current HallUp is not active
+			if !isRequestAbove(elevator) && !elevator.RequestsQueue[floor][types.BT_Up] {
+				elevator.RequestsQueue[floor][types.BT_Down] = false
+			}
+			// Clear HallUp
+			elevator.RequestsQueue[floor][types.BT_Up] = false
 
+		case types.ED_Down:
+			// Check if no requests below and current HallDown is not active
+			if !isRequestBelow(elevator) && !elevator.RequestsQueue[floor][types.BT_Down] {
+				elevator.RequestsQueue[floor][types.BT_Up] = false
+			}
+			// Clear HallDown
+			elevator.RequestsQueue[floor][types.BT_Down] = false
+
+		case types.ED_Stop:
+			fallthrough
+		default:
+			// Clear both HallUp and HallDown
+			elevator.RequestsQueue[floor][types.BT_Up] = false
+			elevator.RequestsQueue[floor][types.BT_Down] = false
+		}
+	}
+	return elevator
 }
-*/
