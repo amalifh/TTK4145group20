@@ -99,35 +99,34 @@ func isRequestBelow(elevator types.ElevInfo) bool {
 	return false
 }
 
-
 func clearRequests(elevator types.ElevInfo, floor int) types.ElevInfo {
-    switch elevator.CV {
-    case types.CV_All:
-        for btn := 0; btn < types.N_BUTTONS; btn++ {
-            elevator.RequestsQueue[floor][btn] = false
-        }
-    case types.CV_InDirn:
-        elevator.RequestsQueue[floor][types.BT_Cab] = false
+	switch elevator.CV {
+	case types.CV_All:
+		for btn := 0; btn < types.N_BUTTONS; btn++ {
+			elevator.RequestsQueue[floor][btn] = false
+		}
+	case types.CV_InDirn:
+		elevator.RequestsQueue[floor][types.BT_Cab] = false
 
-        switch elevator.Dir {
-        case types.ED_Up:
-            if !isRequestAbove(elevator) && !elevator.RequestsQueue[floor][types.BT_Up] {
-                elevator.RequestsQueue[floor][types.BT_Down] = false
-            }
-            elevator.RequestsQueue[floor][types.BT_Up] = false
+		switch elevator.Dir {
+		case types.ED_Up:
+			if !isRequestAbove(elevator) && !elevator.RequestsQueue[floor][types.BT_Up] {
+				elevator.RequestsQueue[floor][types.BT_Down] = false
+			}
+			elevator.RequestsQueue[floor][types.BT_Up] = false
 
-        case types.ED_Down:
-            if !isRequestBelow(elevator) && !elevator.RequestsQueue[floor][types.BT_Down] {
-                elevator.RequestsQueue[floor][types.BT_Up] = false
-            }
-            elevator.RequestsQueue[floor][types.BT_Down] = false
+		case types.ED_Down:
+			if !isRequestBelow(elevator) && !elevator.RequestsQueue[floor][types.BT_Down] {
+				elevator.RequestsQueue[floor][types.BT_Up] = false
+			}
+			elevator.RequestsQueue[floor][types.BT_Down] = false
 
-        case types.ED_Stop:
-            fallthrough
-        default:
-            elevator.RequestsQueue[floor][types.BT_Up] = false
-            elevator.RequestsQueue[floor][types.BT_Down] = false
-        }
-    }
-    return elevator
+		case types.ED_Stop:
+			fallthrough
+		default:
+			elevator.RequestsQueue[floor][types.BT_Up] = false
+			elevator.RequestsQueue[floor][types.BT_Down] = false
+		}
+	}
+	return elevator
 }

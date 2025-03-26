@@ -21,25 +21,25 @@ import (
 )
 
 type SyncChannels struct {
-	UpdateReqAssigner  chan [types.N_ELEVATORS]types.ElevInfo   
-	UpdateSync      chan types.ElevInfo 
-	RequestsUpdate     chan types.ButtonEvent 
-	AliveElevators chan [types.N_ELEVATORS]bool 
-	IncomingMsg     chan types.NetworkMessage 
-	OutgoingMsg     chan types.NetworkMessage 
-	PeerUpdate      chan peers.PeerUpdate 
-	PeerTxEnable    chan bool 
+	UpdateReqAssigner chan [types.N_ELEVATORS]types.ElevInfo
+	UpdateSync        chan types.ElevInfo
+	RequestsUpdate    chan types.ButtonEvent
+	AliveElevators    chan [types.N_ELEVATORS]bool
+	IncomingMsg       chan types.NetworkMessage
+	OutgoingMsg       chan types.NetworkMessage
+	PeerUpdate        chan peers.PeerUpdate
+	PeerTxEnable      chan bool
 }
 
 func Synchronise(ch SyncChannels, id int) {
 	var (
 		registeredRequests [types.N_FLOORS][types.N_BUTTONS - 1]types.AckList
-		elevList         [types.N_ELEVATORS]types.ElevInfo
-		sendMsg          types.NetworkMessage
-		aliveList       [types.N_ELEVATORS]bool
-		recentlyDied     [types.N_ELEVATORS]bool
-		someUpdate       bool
-		offline          bool
+		elevList           [types.N_ELEVATORS]types.ElevInfo
+		sendMsg            types.NetworkMessage
+		aliveList          [types.N_ELEVATORS]bool
+		recentlyDied       [types.N_ELEVATORS]bool
+		someUpdate         bool
+		offline            bool
 	)
 
 	timeout := make(chan bool)

@@ -12,7 +12,8 @@ The main function is the entry point of the program, where it initializes the ne
 
 Usage:
 Run the program with two arguments: <port> <id>. Example:
-  <program> 12345 1
+
+	<program> 12345 1
 */
 package main
 
@@ -91,7 +92,7 @@ func main() {
 }
 
 func killSwitch() {
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
 	driver.SetMotorDirection(types.MD_Stop)
