@@ -127,64 +127,26 @@ func Synchronise(ch SyncChannels, id int) {
 			}
 
 		case msg := <-ch.IncomingMsg:
-			if msg.ID == id || !aliveList[msg.ID] || !aliveList[id] {
+			if !shouldProcessMessage(msg, id, aliveList) {
 				continue
-			} else {
-				if msg.Elevator != elevList {
-					tmpElevator := elevList[id]
-					elevList = msg.Elevator
-					elevList[id] = tmpElevator
+			} else if updatedList, updated := updateElevatorState(msg, id, elevList); updated {
+				elevList = updatedList
+				someUpdate = true
+			}
+			for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
+				if elevator == id || !aliveList[msg.ID] || !aliveList[id] {
+					continue
+				}
+				updatedRequests, updatedElevList, updated := processAcksForElevator(msg, elevator, id, registeredRequests, elevList, aliveList)
+				if updated {
+					registeredRequests = updatedRequests
+					elevList = updatedElevList
 					someUpdate = true
 				}
-				for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
-					if elevator == id || !aliveList[msg.ID] || !aliveList[id] {
-						continue
-					}
-					for floor := 0; floor < types.N_FLOORS; floor++ {
-						for btn := types.BT_Up; btn < types.BT_Cab; btn++ {
-							switch msg.RegisteredRequests[floor][btn].ImplicitAcks[elevator] {
-							case types.NOTACK:
-								if registeredRequests[floor][btn].ImplicitAcks[id] == types.COMPLETED {
-									registeredRequests = copyAckList(msg, registeredRequests, elevator, floor, id, btn)
-								} else if registeredRequests[floor][btn].ImplicitAcks[elevator] != types.NOTACK {
-									registeredRequests[floor][btn].ImplicitAcks[elevator] = types.NOTACK
-								}
-
-							case types.ACK:
-								if registeredRequests[floor][btn].ImplicitAcks[id] == types.NOTACK {
-									registeredRequests = copyAckList(msg, registeredRequests, elevator, floor, id, btn)
-								} else if registeredRequests[floor][btn].ImplicitAcks[elevator] != types.ACK {
-									registeredRequests[floor][btn].ImplicitAcks[elevator] = types.ACK
-								}
-								if checkAllAckStatus(aliveList, registeredRequests[floor][btn].ImplicitAcks, types.ACK) &&
-									!elevList[id].RequestsQueue[floor][btn] &&
-									registeredRequests[floor][btn].ChosenElevator == id {
-									elevList[id].RequestsQueue[floor][btn] = true
-									someUpdate = true
-								}
-
-							case types.COMPLETED:
-								if registeredRequests[floor][btn].ImplicitAcks[id] == types.ACK {
-									registeredRequests = copyAckList(msg, registeredRequests, elevator, floor, id, btn)
-								} else if registeredRequests[floor][btn].ImplicitAcks[elevator] != types.COMPLETED {
-									registeredRequests[floor][btn].ImplicitAcks[elevator] = types.COMPLETED
-								}
-
-								if checkAllAckStatus(aliveList, registeredRequests[floor][btn].ImplicitAcks, types.COMPLETED) {
-									registeredRequests[floor][btn].ImplicitAcks[id] = types.NOTACK
-									if registeredRequests[floor][btn].ChosenElevator == id {
-										elevList[id].RequestsQueue[floor][btn] = false
-										someUpdate = true
-									}
-								}
-							}
-						}
-					}
-				}
-				if someUpdate {
-					ch.UpdateReqAssigner <- elevList
-					someUpdate = false
-				}
+			}
+			if someUpdate {
+				ch.UpdateReqAssigner <- elevList
+				someUpdate = false
 			}
 
 		case <-singleModeTicker.C:

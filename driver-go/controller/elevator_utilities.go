@@ -99,7 +99,11 @@ func isRequestBelow(elevator types.ElevInfo) bool {
 	return false
 }
 
-func clearHallDown(elevator types.ElevInfo)
+//making functions to deal with the lights?
+/*
+func clearHallDown(elevator types.ElevInfo) bool {
+
+}*/
 
 func clearRequests(elevator types.ElevInfo, floor int) types.ElevInfo {
 	switch elevator.CV {

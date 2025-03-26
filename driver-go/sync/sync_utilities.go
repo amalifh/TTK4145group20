@@ -58,6 +58,7 @@ func processAcksForElevator(
 	elevList [types.N_ELEVATORS]types.ElevInfo,
 	aliveList [types.N_ELEVATORS]bool,
 ) ([types.N_FLOORS][types.N_BUTTONS - 1]types.AckList, [types.N_ELEVATORS]types.ElevInfo, bool) {
+
 	updateOccurred := false
 
 	for floor := 0; floor < types.N_FLOORS; floor++ {
