@@ -1,7 +1,7 @@
 /*
 Package controller implements the finite state machine (FSM) for controlling an elevator system.
 It manages the elevator's movement, state transitions, and response to external events such as new
-requests, floor arrivals, and obstructions. 
+requests, floor arrivals, and obstructions.
 
 Constants:
 - DOOR_OPEN_TIME: The duration for which the elevator door remains open.
@@ -39,13 +39,13 @@ type FsmChannels struct {
 }
 
 func ElevatorHandler(ch FsmChannels) {
-	// Change it with a config file 
+	// Change it with a config file
 	elevator := types.ElevInfo{
 		State:         types.EB_Idle,
 		Dir:           types.ED_Stop,
 		Floor:         driver.GetFloor(),
 		RequestsQueue: [types.N_FLOORS][types.N_BUTTONS]bool{},
-		CV:            types.CV_InDirn, 
+		CV:            types.CV_InDirn,
 	}
 
 	doorTimer := time.NewTimer(DOOR_OPEN_TIME)
@@ -152,15 +152,11 @@ func ElevatorHandler(ch FsmChannels) {
 						elevator = clearRequests(elevator, elevator.Floor)
 						go func() { ch.RequestsComplete <- elevator.Floor }()
 					}
-<<<<<<< HEAD
-				} else if elevator.State == types.EB_DoorOpen && elevator.State == types.EB_Idle{
-=======
 				} else if elevator.State == types.EB_DoorOpen || elevator.State == types.EB_Idle {
 					// Already stopped with doors open; ensure door remains open.
 					if elevator.State == types.EB_Idle {
 						elevator.State = types.EB_DoorOpen
 					}
->>>>>>> fbdbe9c2c0ad9cfe84ec7114e72b9cf3b0ae7e9d
 					driver.SetDoorOpenLamp(true)
 					doorTimer.Reset(DOOR_OPEN_TIME)
 				}
@@ -182,32 +178,6 @@ func ElevatorHandler(ch FsmChannels) {
 			}
 			ch.Elevator <- elevator
 
-<<<<<<< HEAD
-			case <-doorTimer.C:
-				if obstructionActive {
-					doorTimer.Reset(DOOR_OPEN_TIME)
-					break
-				}
-				driver.SetDoorOpenLamp(false)
-				elevator.Dir = chooseDirection(elevator)
-				if elevator.Dir == types.ED_Stop {
-					elevator.State = types.EB_Idle
-					mobilityTimer.Stop()
-				} else {
-					elevator.State = types.EB_Moving
-					mobilityTimer.Reset(MOBILITY_TIMEOUT)
-					driver.SetMotorDirection(DirectionConverter(elevator.Dir))
-				}
-				ch.Elevator <- elevator
-
-			case <-mobilityTimer.C:
-				driver.SetMotorDirection(types.MD_Stop)
-				elevator.State = types.EB_Undefined
-				fmt.Println("\x1b[1;1;33m", "Engine Error - Go offline", "\x1b[0m")
-				// Deleted blinking light
-				driver.SetMotorDirection(DirectionConverter(elevator.Dir))
-				ch.Elevator <- elevator
-=======
 		case <-doorTimer.C:
 			if obstructionActive {
 				doorTimer.Reset(DOOR_OPEN_TIME)
@@ -220,10 +190,21 @@ func ElevatorHandler(ch FsmChannels) {
 				mobilityTimer.Stop()
 			} else {
 				elevator.State = types.EB_Moving
->>>>>>> fbdbe9c2c0ad9cfe84ec7114e72b9cf3b0ae7e9d
 				mobilityTimer.Reset(MOBILITY_TIMEOUT)
 				driver.SetMotorDirection(DirectionConverter(elevator.Dir))
 			}
+			ch.Elevator <- elevator
+
+		case <-mobilityTimer.C:
+			driver.SetMotorDirection(types.MD_Stop)
+			elevator.State = types.EB_Undefined
+			fmt.Println("\x1b[1;1;33m", "Engine Error - Go offline", "\x1b[0m")
+			// Deleted blinking light
+			driver.SetMotorDirection(DirectionConverter(elevator.Dir))
+			ch.Elevator <- elevator
+			mobilityTimer.Reset(MOBILITY_TIMEOUT)
+			driver.SetMotorDirection(DirectionConverter(elevator.Dir))
+
 			ch.Elevator <- elevator
 
 		case <-mobilityTimer.C:
@@ -241,6 +222,7 @@ func ElevatorHandler(ch FsmChannels) {
 			driver.SetMotorDirection(DirectionConverter(elevator.Dir))
 			ch.Elevator <- elevator
 			mobilityTimer.Reset(MOBILITY_TIMEOUT)
+
 		}
 	}
 }
