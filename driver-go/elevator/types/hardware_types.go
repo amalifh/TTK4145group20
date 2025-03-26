@@ -1,3 +1,15 @@
+/*
+Package types defines additional constants and data structures for controlling elevator motor directions
+and handling button events.
+
+Types:
+- MotorDirection: Enum representing possible motor movements (Up, Down, Stop).
+- ButtonType: Enum defining the types of elevator buttons (Up, Down, Cab).
+- ButtonEvent: Struct representing an event when a button is pressed, including floor number, button type,
+  assigned elevator, and whether the request has been completed.
+
+These definitions support communication and decision-making in the elevator control system.
+*/
 package types
 
 type MotorDirection int

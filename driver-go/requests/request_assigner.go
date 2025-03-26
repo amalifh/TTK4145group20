@@ -1,3 +1,20 @@
+/*
+Package requests manages elevator request assignments and button light updates in a multi-elevator system.
+
+This package contains functions for handling incoming requests, distributing them among active elevators,
+updating request queues, and ensuring proper synchronization between elevators. It also manages button
+lamp states to reflect the current status of requests.
+
+Functions:
+- RequestAssigner: Listens for button press events, assigns requests to the most suitable elevator, updates request queues, 
+  and communicates status changes to other elevators.
+- LightsUpdater: Monitors request queues and updates the corresponding button lamps to indicate active requests.
+
+The package operates using multiple channels for inter-module communication, ensuring a distributed approach to request 
+handling and elevator coordination.
+
+Credits: https://github.com/perkjelsvik/TTK4145-sanntid
+*/
 package requests
 
 import (
@@ -8,8 +25,8 @@ import (
 
 func RequestAssigner(
 	id int,
-	bPressedCh chan types.ButtonEvent, // Button pressed
-	lUpdateCh chan [types.N_ELEVATORS]types.ElevInfo, // Lights update
+	bPressedCh chan types.ButtonEvent, 
+	lUpdateCh chan [types.N_ELEVATORS]types.ElevInfo,
 	completedRequestsCh chan int,
 	newRequestsCh chan types.ButtonEvent,
 	elevatorsCh chan types.ElevInfo,
@@ -25,16 +42,13 @@ func RequestAssigner(
 	for {
 		select {
 		case newLocalRequest := <-bPressedCh:
-			// If the request is a cab request, the elevator should handle it
 			if !aliveList[id] && newLocalRequest.Btn == types.BT_Cab {
 				elevList[id].RequestsQueue[newLocalRequest.Floor][types.BT_Cab] = true
 				lUpdateCh <- elevList
 				go func() { newRequestsCh <- newLocalRequest }()
 
-				// If the elevator is not alive, and the request is not a cab request, do nothing
 			} else if !aliveList[id] && newLocalRequest.Btn != types.BT_Cab {
 				continue
-				// In any other case the request should be assigned to the best elevator
 			} else {
 				if newLocalRequest.Floor == elevList[id].Floor && elevList[id].State != types.EB_Moving {
 					newRequestsCh <- newLocalRequest
@@ -124,7 +138,6 @@ func LightsUpdater(lUpdateCh <-chan [types.N_ELEVATORS]types.ElevInfo, id int) {
 				for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
 					RequestExists[elevator] = false
 					if elevator != id && btn == types.BT_Cab {
-						// Ignore inside Requests for other elevators
 						continue
 					}
 					if elevs[elevator].RequestsQueue[floor][btn] {

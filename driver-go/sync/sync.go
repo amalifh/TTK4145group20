@@ -1,3 +1,14 @@
+/*
+Package sync manages synchronization and communication between distributed elevators in a multi-elevator control system.
+
+This package provides:
+- `SyncChannels`: A struct that defines channels for inter-process communication, handling updates to request assignments, elevator states, network messages, and peer connections.
+- `Synchronise`: A function that ensures consistent state synchronization across elevators by exchanging messages, handling peer updates, and managing request acknowledgments.
+
+The synchronization mechanism ensures that elevator assignments remain consistent across the network, accounts for elevator failures, and facilitates reassignment of lost requests to maintain system reliability.
+
+Credits: https://github.com/perkjelsvik/TTK4145-sanntid
+*/
 package sync
 
 import (
@@ -9,19 +20,17 @@ import (
 	"Driver-go/network/peers"
 )
 
-// SyncChannels contains all channels between governor - sync and sync - network
 type SyncChannels struct {
-	UpdateReqAssigner  chan [types.N_ELEVATORS]types.ElevInfo // Send updated elevator information to the request_assigner.  
-	UpdateSync      chan types.ElevInfo // Receive updates about the state of a specific elevator.
-	RequestsUpdate     chan types.ButtonEvent // Send updates about button requests made by users.
-	AliveElevators chan [types.N_ELEVATORS]bool // Send information about which elevators are alive.
-	IncomingMsg     chan types.NetworkMessage // Receive messages from the network.
-	OutgoingMsg     chan types.NetworkMessage // Send messages to the network.
-	PeerUpdate      chan peers.PeerUpdate // Handle updates about the state of peers (other elevators).
-	PeerTxEnable    chan bool // Enable or disable peer communication 
+	UpdateReqAssigner  chan [types.N_ELEVATORS]types.ElevInfo   
+	UpdateSync      chan types.ElevInfo 
+	RequestsUpdate     chan types.ButtonEvent 
+	AliveElevators chan [types.N_ELEVATORS]bool 
+	IncomingMsg     chan types.NetworkMessage 
+	OutgoingMsg     chan types.NetworkMessage 
+	PeerUpdate      chan peers.PeerUpdate 
+	PeerTxEnable    chan bool 
 }
 
-// Synchronise called as goroutine; forwards data to network, synchronises data from network.
 func Synchronise(ch SyncChannels, id int) {
 	var (
 		registeredRequests [types.N_FLOORS][types.N_BUTTONS - 1]types.AckList
@@ -34,7 +43,7 @@ func Synchronise(ch SyncChannels, id int) {
 	)
 
 	timeout := make(chan bool)
-	go func() { time.Sleep(1 * time.Second); timeout <- true }() // If no message is received within 1 second, the system enters an offline state.
+	go func() { time.Sleep(1 * time.Second); timeout <- true }()
 
 	select {
 	case initMsg := <-ch.IncomingMsg:
@@ -178,8 +187,6 @@ func Synchronise(ch SyncChannels, id int) {
 				}
 			}
 
-		// This ticker is used to periodically check for new requests in single elevator mode.
-		// It checks if any button requests are still pending acknowledgment and assigns them to the appropriate elevator.
 		case <-singleModeTicker.C:
 			for floor := 0; floor < types.N_FLOORS; floor++ {
 				for btn := types.BT_Up; btn < types.BT_Cab; btn++ {
@@ -199,7 +206,6 @@ func Synchronise(ch SyncChannels, id int) {
 				someUpdate = false
 			}
 
-		// This ticker is used to periodically broadcast the updated elevator and request status to the network.
 		case <-broadcastTicker.C:
 			if !offline {
 				sendMsg.RegisteredRequests = registeredRequests

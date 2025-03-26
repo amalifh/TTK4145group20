@@ -1,5 +1,7 @@
-// +build linux
-
+/*
+	+build linux
+	Credits: https://github.com/TTK4145/Network-go
+*/
 package conn
 
 import (

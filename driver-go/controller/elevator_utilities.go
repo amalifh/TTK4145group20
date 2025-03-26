@@ -1,3 +1,16 @@
+/*
+Package controller provides utility functions to determine elevator movement, stopping conditions,
+and direction conversion for an elevator system.
+
+Functions:
+- shouldStop: Determines whether the elevator should stop at the current floor based on requests and direction.
+- chooseDirection: Determines the elevator's next movement direction based on pending requests.
+- DirectionConverter: Converts an elevator's movement direction into a corresponding motor command.
+- isRequestAbove: Checks if there are any active requests above the current floor.
+- isRequestBelow: Checks if there are any active requests below the current floor.
+
+These functions support the finite state machine (FSM) logic in managing elevator behavior efficiently.
+*/
 package controller
 
 import (
@@ -86,41 +99,35 @@ func isRequestBelow(elevator types.ElevInfo) bool {
 	return false
 }
 
+
 func clearRequests(elevator types.ElevInfo, floor int) types.ElevInfo {
-	switch elevator.CV {
-	case types.CV_All:
-		// Clear all buttons at the current floor
-		for btn := 0; btn < types.N_BUTTONS; btn++ {
-			elevator.RequestsQueue[floor][btn] = false
-		}
-	case types.CV_InDirn:
-		// Always clear Cab request
-		elevator.RequestsQueue[floor][types.BT_Cab] = false
+    switch elevator.CV {
+    case types.CV_All:
+        for btn := 0; btn < types.N_BUTTONS; btn++ {
+            elevator.RequestsQueue[floor][btn] = false
+        }
+    case types.CV_InDirn:
+        elevator.RequestsQueue[floor][types.BT_Cab] = false
 
-		switch elevator.Dir {
-		case types.ED_Up:
-			// Check if no requests above and current HallUp is not active
-			if !isRequestAbove(elevator) && !elevator.RequestsQueue[floor][types.BT_Up] {
-				elevator.RequestsQueue[floor][types.BT_Down] = false
-			}
-			// Clear HallUp
-			elevator.RequestsQueue[floor][types.BT_Up] = false
+        switch elevator.Dir {
+        case types.ED_Up:
+            if !isRequestAbove(elevator) && !elevator.RequestsQueue[floor][types.BT_Up] {
+                elevator.RequestsQueue[floor][types.BT_Down] = false
+            }
+            elevator.RequestsQueue[floor][types.BT_Up] = false
 
-		case types.ED_Down:
-			// Check if no requests below and current HallDown is not active
-			if !isRequestBelow(elevator) && !elevator.RequestsQueue[floor][types.BT_Down] {
-				elevator.RequestsQueue[floor][types.BT_Up] = false
-			}
-			// Clear HallDown
-			elevator.RequestsQueue[floor][types.BT_Down] = false
+        case types.ED_Down:
+            if !isRequestBelow(elevator) && !elevator.RequestsQueue[floor][types.BT_Down] {
+                elevator.RequestsQueue[floor][types.BT_Up] = false
+            }
+            elevator.RequestsQueue[floor][types.BT_Down] = false
 
-		case types.ED_Stop:
-			fallthrough
-		default:
-			// Clear both HallUp and HallDown
-			elevator.RequestsQueue[floor][types.BT_Up] = false
-			elevator.RequestsQueue[floor][types.BT_Down] = false
-		}
-	}
-	return elevator
+        case types.ED_Stop:
+            fallthrough
+        default:
+            elevator.RequestsQueue[floor][types.BT_Up] = false
+            elevator.RequestsQueue[floor][types.BT_Down] = false
+        }
+    }
+    return elevator
 }

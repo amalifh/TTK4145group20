@@ -1,3 +1,21 @@
+/*
+Package types defines the core constants and data structures used to represent elevator states,
+directions, behaviors, and request handling in the elevator system.
+
+Constants:
+- N_FLOORS: The number of floors in the building.
+- N_ELEVATORS: The number of elevators in the system.
+- N_BUTTONS: The number of buttons per floor (Up, Down, and Cab).
+
+Types:
+- ElevDirection: Enum representing elevator movement directions (Up, Down, Stop).
+- ElevBehaviour: Enum representing different operational states of the elevator (Idle, Moving, DoorOpen, Undefined).
+- ClearRequestVariant: Enum specifying how requests should be cleared when the elevator stops.
+- ElevInfo: Struct containing the state of an elevator, including its behavior, direction, current floor,
+  request queue, and request clearing policy.
+
+These definitions form the foundation for controlling and managing the elevator system.
+*/
 package types
 
 const (
@@ -9,9 +27,9 @@ const (
 type ElevDirection int
 
 const (
-	ED_Down ElevDirection = iota - 1 // Moving down
-	ED_Stop                          // Stopped (idle state)
-	ED_Up                            // Moving up
+	ED_Down ElevDirection = iota - 1 
+	ED_Stop                          
+	ED_Up                            
 )
 
 type ElevBehaviour int
@@ -26,8 +44,8 @@ const (
 type ClearRequestVariant int
 
 const (
-	CV_All    ClearRequestVariant = iota // Everyone enters the elevator, even if going in the "wrong" direction
-	CV_InDirn                            // Only passengers traveling in the current direction enter
+	CV_All    ClearRequestVariant = iota 
+	CV_InDirn                           
 )
 
 type ElevInfo struct {

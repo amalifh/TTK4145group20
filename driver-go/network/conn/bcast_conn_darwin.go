@@ -1,5 +1,7 @@
-// +build darwin
-
+/*
+	+build darwin
+	Credits: https://github.com/TTK4145/Network-go
+*/
 package conn
 
 import (

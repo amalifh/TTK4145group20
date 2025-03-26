@@ -1,3 +1,19 @@
+/*
+Package main initializes and runs the elevator control system, handling communication between different components, elevator state updates, and synchronization across multiple elevators.
+
+Key Features:
+- Initializes channels for communication between the controller, request manager, elevator driver, and synchronization modules.
+- Handles initialization and polling of elevator hardware, including button presses, floor sensors, and obstruction switches.
+- Runs the elevator controller, request assignment, light updates, and synchronization in parallel goroutines.
+- Manages network communication for broadcasting elevator states, receiving updates, and handling peer connections.
+- Implements a kill switch for graceful termination of the elevator system in case of a user interruption.
+
+The main function is the entry point of the program, where it initializes the necessary components, starts the goroutines for different modules, and handles the elevator system's operations.
+
+Usage:
+Run the program with two arguments: <port> <id>. Example:
+  <program> 12345 1
+*/
 package main
 
 import (
@@ -75,7 +91,6 @@ func main() {
 }
 
 func killSwitch() {
-	// killSwitch turns the motor off if the program is killed with CTRL+C.
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt)
 	<-c

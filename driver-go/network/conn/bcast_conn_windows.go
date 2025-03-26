@@ -1,4 +1,7 @@
-// +build windows
+/*
+	+build windows
+	Credits: https://github.com/TTK4145/Network-go
+*/
 
 package conn
 

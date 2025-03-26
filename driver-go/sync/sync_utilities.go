@@ -1,7 +1,17 @@
+/*
+Package sync provides functions for managing synchronization and acknowledgment of elevator requests in a distributed elevator system.
+
+This package includes:
+- `copyAckList`: Copies acknowledgment data from a network message to the local registered orders, ensuring consistency across elevators.
+- `checkAllAckStatus`: Verifies whether all active elevators have a specific acknowledgment status for a given request.
+
+These functions help maintain synchronization between elevators by tracking implicit acknowledgments and ensuring correct request assignments.
+
+Credits: https://github.com/perkjelsvik/TTK4145-sanntid
+*/
 package sync
 
 import "Driver-go/elevator/types"
-
 
 func copyAckList(
 	msg types.NetworkMessage, 
