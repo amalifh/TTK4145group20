@@ -99,6 +99,8 @@ func isRequestBelow(elevator types.ElevInfo) bool {
 	return false
 }
 
+func clearHallDown(elevator types.ElevInfo)
+
 func clearRequests(elevator types.ElevInfo, floor int) types.ElevInfo {
 	switch elevator.CV {
 	case types.CV_All:
