@@ -120,7 +120,7 @@ func ElevatorHandler(ch FsmChannels) {
 				driver.SetDoorOpenLamp(true)
 				doorTimer.Reset(DOOR_OPEN_TIME)
 				elevator.State = types.EB_DoorOpen
-			}else if shouldStop(elevator) ||
+			} else if shouldStop(elevator) ||
 				(!shouldStop(elevator) && elevator.RequestsQueue == [types.N_FLOORS][types.N_BUTTONS]bool{} && requestCleared) {
 				requestCleared = false
 				driver.SetDoorOpenLamp(true)
@@ -152,7 +152,15 @@ func ElevatorHandler(ch FsmChannels) {
 						elevator = clearRequests(elevator, elevator.Floor)
 						go func() { ch.RequestsComplete <- elevator.Floor }()
 					}
+<<<<<<< HEAD
 				} else if elevator.State == types.EB_DoorOpen && elevator.State == types.EB_Idle{
+=======
+				} else if elevator.State == types.EB_DoorOpen || elevator.State == types.EB_Idle {
+					// Already stopped with doors open; ensure door remains open.
+					if elevator.State == types.EB_Idle {
+						elevator.State = types.EB_DoorOpen
+					}
+>>>>>>> fbdbe9c2c0ad9cfe84ec7114e72b9cf3b0ae7e9d
 					driver.SetDoorOpenLamp(true)
 					doorTimer.Reset(DOOR_OPEN_TIME)
 				}
@@ -174,6 +182,7 @@ func ElevatorHandler(ch FsmChannels) {
 			}
 			ch.Elevator <- elevator
 
+<<<<<<< HEAD
 			case <-doorTimer.C:
 				if obstructionActive {
 					doorTimer.Reset(DOOR_OPEN_TIME)
@@ -198,7 +207,40 @@ func ElevatorHandler(ch FsmChannels) {
 				// Deleted blinking light
 				driver.SetMotorDirection(DirectionConverter(elevator.Dir))
 				ch.Elevator <- elevator
+=======
+		case <-doorTimer.C:
+			if obstructionActive {
+				doorTimer.Reset(DOOR_OPEN_TIME)
+				break
+			}
+			driver.SetDoorOpenLamp(false)
+			elevator.Dir = chooseDirection(elevator)
+			if elevator.Dir == types.ED_Stop {
+				elevator.State = types.EB_Idle
+				mobilityTimer.Stop()
+			} else {
+				elevator.State = types.EB_Moving
+>>>>>>> fbdbe9c2c0ad9cfe84ec7114e72b9cf3b0ae7e9d
 				mobilityTimer.Reset(MOBILITY_TIMEOUT)
+				driver.SetMotorDirection(DirectionConverter(elevator.Dir))
+			}
+			ch.Elevator <- elevator
+
+		case <-mobilityTimer.C:
+			driver.SetMotorDirection(types.MD_Stop)
+			elevator.State = types.EB_Undefined
+			fmt.Println("\x1b[1;1;33m", "Engine Error - Go offline", "\x1b[0m")
+			for i := 0; i < 10; i++ {
+				if i%2 == 0 {
+					driver.SetStopLamp(true)
+				} else {
+					driver.SetStopLamp(false)
+				}
+				time.Sleep(time.Millisecond * 200)
+			}
+			driver.SetMotorDirection(DirectionConverter(elevator.Dir))
+			ch.Elevator <- elevator
+			mobilityTimer.Reset(MOBILITY_TIMEOUT)
 		}
 	}
 }
