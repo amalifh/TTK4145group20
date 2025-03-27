@@ -6,11 +6,11 @@ updating request queues, and ensuring proper synchronization between elevators. 
 lamp states to reflect the current status of requests.
 
 Functions:
-- RequestAssigner: Listens for button press events, assigns requests to the most suitable elevator, updates request queues, 
-  and communicates status changes to other elevators.
-- LightsUpdater: Monitors request queues and updates the corresponding button lamps to indicate active requests.
+  - RequestAssigner: Listens for button press events, assigns requests to the most suitable elevator, updates request queues,
+    and communicates status changes to other elevators.
+  - LightsUpdater: Monitors request queues and updates the corresponding button lamps to indicate active requests.
 
-The package operates using multiple channels for inter-module communication, ensuring a distributed approach to request 
+The package operates using multiple channels for inter-module communication, ensuring a distributed approach to request
 handling and elevator coordination.
 
 Credits: https://github.com/perkjelsvik/TTK4145-sanntid
@@ -25,7 +25,7 @@ import (
 
 func RequestAssigner(
 	id int,
-	bPressedCh chan types.ButtonEvent, 
+	bPressedCh chan types.ButtonEvent,
 	lUpdateCh chan [types.N_ELEVATORS]types.ElevInfo,
 	completedRequestsCh chan int,
 	newRequestsCh chan types.ButtonEvent,
@@ -129,26 +129,21 @@ func RequestAssigner(
 }
 
 func LightsUpdater(lUpdateCh <-chan [types.N_ELEVATORS]types.ElevInfo, id int) {
-	var RequestExists [types.N_ELEVATORS]bool
-
-	for {
-		elevs := <-lUpdateCh
+	for elevs := range lUpdateCh {
 		for floor := 0; floor < types.N_FLOORS; floor++ {
-			for btn := types.BT_Up; btn < types.N_BUTTONS; btn++ {
-				for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
-					RequestExists[elevator] = false
-					if elevator != id && btn == types.BT_Cab {
-						continue
-					}
-					if elevs[elevator].RequestsQueue[floor][btn] {
-						driver.SetButtonLamp(btn, floor, true)
-						RequestExists[elevator] = true
+			for btn := types.BT_Up; btn <= types.BT_Down; btn++ {
+				hasRequest := false
+				for _, elev := range elevs {
+					if elev.RequestsQueue[floor][btn] {
+						hasRequest = true
+						break
 					}
 				}
-				if RequestExists == [types.N_ELEVATORS]bool{} {
-					driver.SetButtonLamp(btn, floor, false)
-				}
+				driver.SetButtonLamp(btn, floor, hasRequest)
 			}
+
+			cabRequest := elevs[id].RequestsQueue[floor][types.BT_Cab]
+			driver.SetButtonLamp(types.BT_Cab, floor, cabRequest)
 		}
 	}
 }
