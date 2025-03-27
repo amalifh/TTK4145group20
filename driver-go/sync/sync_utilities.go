@@ -146,8 +146,11 @@ func handleRequestUpdate(
 		elevList[id].RequestsQueue[newRequest.Floor] = [types.N_BUTTONS]bool{}
 		*someUpdate = true
 		if newRequest.Btn != types.BT_Cab {
-			registeredRequests[newRequest.Floor][types.BT_Up].ImplicitAcks[id] = types.COMPLETED
-			registeredRequests[newRequest.Floor][types.BT_Down].ImplicitAcks[id] = types.COMPLETED
+			if newRequest.Btn == types.BT_Up {
+				registeredRequests[newRequest.Floor][types.BT_Up].ImplicitAcks[id] = types.COMPLETED
+			} else if newRequest.Btn == types.BT_Down {
+				registeredRequests[newRequest.Floor][types.BT_Down].ImplicitAcks[id] = types.COMPLETED
+			}
 			fmt.Printf("Completed Request %v at floor %d\n", newRequest.Btn, newRequest.Floor)
 		}
 	} else {
