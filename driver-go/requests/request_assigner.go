@@ -61,22 +61,41 @@ func RequestAssigner(
 				}
 			}
 
-		case completedRequests.Floor = <-completedRequestsCh: // Here's the problem regarding the CV_InDirn Logic
+		case completedRequests.Floor = <-completedRequestsCh:
 			completedRequests.Done = true
-			for btn := types.BT_Up; btn < types.N_BUTTONS; btn++ {
-				if elevList[id].RequestsQueue[completedRequests.Floor][btn] {
-					completedRequests.Btn = btn
-				}
+			currentFloor := completedRequests.Floor
+			currentDirn := elevList[id].Dir
+			clearVariant := elevList[id].CV
+
+			for btn := types.BT_Up; btn <= types.BT_Down; btn++ {
 				for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
-					if btn != types.BT_Cab || elevator == id {
-						elevList[elevator].RequestsQueue[completedRequests.Floor][btn] = false
+					if elevator >= len(elevList) {
+						continue
+					}
+
+					switch clearVariant {
+					case types.CV_All:
+						elevList[elevator].RequestsQueue[currentFloor][btn] = false
+
+					case types.CV_InDirn:
+						if elevator == id {
+							if (currentDirn == types.ED_Up && btn == types.BT_Up) ||
+								(currentDirn == types.ED_Down && btn == types.BT_Down) {
+								elevList[elevator].RequestsQueue[currentFloor][btn] = false
+							}
+						}
 					}
 				}
+			}
+
+			if clearVariant == types.CV_All || (clearVariant == types.CV_InDirn && id == completedRequests.ChosenElevator) {
+				elevList[id].RequestsQueue[currentFloor][types.BT_Cab] = false
 			}
 
 			if aliveList[id] {
 				updatedRequestsCh <- completedRequests
 			}
+
 			lUpdateCh <- elevList
 
 		case newElev := <-elevatorsCh:
