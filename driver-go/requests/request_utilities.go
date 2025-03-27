@@ -2,9 +2,9 @@
 Package requests provides utility functions for managing elevator request distribution in a multi-elevator system.
 
 This package includes:
-- `duplicateRequest`: Checks whether a given request already exists in the request queue to avoid redundancy.
-- `calcChosenElevator`: Determines the most suitable elevator to handle a request based on factors like 
-  current position, direction, and operational state.
+  - `duplicateRequest`: Checks whether a given request already exists in the request queue to avoid redundancy.
+  - `calcChosenElevator`: Determines the most suitable elevator to handle a request based on factors like
+    current position, direction, and operational state.
 
 The package ensures efficient request assignment while minimizing elevator travel time and optimizing responsiveness.
 
@@ -28,7 +28,7 @@ func duplicateRequest(request types.ButtonEvent, elevList [types.N_ELEVATORS]typ
 	return false
 }
 
-func calcChosenElevator(request types.ButtonEvent, elevList [types.N_ELEVATORS]types.ElevInfo, id int, aliveList [types.N_ELEVATORS]bool) int {
+func CalcChosenElevator(request types.ButtonEvent, elevList [types.N_ELEVATORS]types.ElevInfo, id int, aliveList [types.N_ELEVATORS]bool) int {
 	if request.Btn == types.BT_Cab {
 		return id
 	}

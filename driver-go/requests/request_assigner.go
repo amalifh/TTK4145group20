@@ -55,13 +55,13 @@ func RequestAssigner(
 				} else {
 					if !duplicateRequest(newLocalRequest, elevList, id) {
 						fmt.Println("New request at floor ", newLocalRequest.Floor, " for button ", newLocalRequest.Btn)
-						newLocalRequest.ChosenElevator = calcChosenElevator(newLocalRequest, elevList, id, aliveList)
+						newLocalRequest.ChosenElevator = CalcChosenElevator(newLocalRequest, elevList, id, aliveList)
 						updatedRequestsCh <- newLocalRequest
 					}
 				}
 			}
 
-		case completedRequests.Floor = <-completedRequestsCh:
+		case completedRequests.Floor = <-completedRequestsCh: // Here's the problem regarding the CV_InDirn Logic
 			completedRequests.Done = true
 			for btn := types.BT_Up; btn < types.N_BUTTONS; btn++ {
 				if elevList[id].RequestsQueue[completedRequests.Floor][btn] {
@@ -131,6 +131,7 @@ func RequestAssigner(
 func LightsUpdater(lUpdateCh <-chan [types.N_ELEVATORS]types.ElevInfo, id int) {
 	for elevs := range lUpdateCh {
 		for floor := 0; floor < types.N_FLOORS; floor++ {
+			// Handle hall buttons (Up and Down)
 			for btn := types.BT_Up; btn <= types.BT_Down; btn++ {
 				hasRequest := false
 				for _, elev := range elevs {
@@ -142,6 +143,7 @@ func LightsUpdater(lUpdateCh <-chan [types.N_ELEVATORS]types.ElevInfo, id int) {
 				driver.SetButtonLamp(btn, floor, hasRequest)
 			}
 
+			// Handle cab button (only for this elevator)
 			cabRequest := elevs[id].RequestsQueue[floor][types.BT_Cab]
 			driver.SetButtonLamp(types.BT_Cab, floor, cabRequest)
 		}
