@@ -18,12 +18,13 @@ Credits: https://github.com/perkjelsvik/TTK4145-sanntid
 package requests
 
 import (
+	"Driver-go/controller"
 	"Driver-go/elevator/driver"
 	"Driver-go/elevator/types"
 	"fmt"
 )
 
-func RequestAssigner(
+func RequestAssigner( // Lacking logic for handling request in opposite direction once the first request is cleared
 	id int,
 	bPressedCh chan types.ButtonEvent,
 	lUpdateCh chan [types.N_ELEVATORS]types.ElevInfo,
@@ -79,10 +80,18 @@ func RequestAssigner(
 
 					case types.CV_InDirn:
 						if elevator == id {
-							if (currentDirn == types.ED_Up && btn == types.BT_Up) ||
-								(currentDirn == types.ED_Down && btn == types.BT_Down) {
-								elevList[elevator].RequestsQueue[currentFloor][btn] = false
+							if currentDirn == types.ED_Up && btn == types.BT_Up {
+								elevList[elevator].RequestsQueue[currentFloor][types.BT_Up] = false
+								if !controller.IsRequestAbove(elevList[elevator]) {
+									elevList[elevator].RequestsQueue[currentFloor][types.BT_Down] = false
+								}
+							} else if currentDirn == types.ED_Down && btn == types.BT_Down {
+								if !controller.IsRequestBelow(elevList[elevator]) {
+									elevList[elevator].RequestsQueue[currentFloor][types.BT_Up] = false
+								}
 							}
+							//Add logic and a timer for handling requests in opposite direction once the first request is cleared
+
 						}
 					}
 				}

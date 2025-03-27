@@ -6,8 +6,8 @@ Functions:
 - shouldStop: Determines whether the elevator should stop at the current floor based on requests and direction.
 - chooseDirection: Determines the elevator's next movement direction based on pending requests.
 - DirectionConverter: Converts an elevator's movement direction into a corresponding motor command.
-- isRequestAbove: Checks if there are any active requests above the current floor.
-- isRequestBelow: Checks if there are any active requests below the current floor.
+- IsRequestAbove: Checks if there are any active requests above the current floor.
+- IsRequestBelow: Checks if there are any active requests below the current floor.
 
 These functions support the finite state machine (FSM) logic in managing elevator behavior efficiently.
 */
@@ -22,11 +22,11 @@ func shouldStop(elevator types.ElevInfo) bool {
 	case types.ED_Up:
 		return elevator.RequestsQueue[elevator.Floor][types.BT_Up] ||
 			elevator.RequestsQueue[elevator.Floor][types.BT_Cab] ||
-			!isRequestAbove(elevator)
+			!IsRequestAbove(elevator)
 	case types.ED_Down:
 		return elevator.RequestsQueue[elevator.Floor][types.BT_Down] ||
 			elevator.RequestsQueue[elevator.Floor][types.BT_Cab] ||
-			!isRequestBelow(elevator)
+			!IsRequestBelow(elevator)
 	case types.ED_Stop:
 	default:
 	}
@@ -36,27 +36,27 @@ func shouldStop(elevator types.ElevInfo) bool {
 func chooseDirection(elevator types.ElevInfo) types.ElevDirection {
 	switch elevator.Dir {
 	case types.ED_Stop:
-		if isRequestAbove(elevator) {
+		if IsRequestAbove(elevator) {
 			return types.ED_Up
-		} else if isRequestBelow(elevator) {
+		} else if IsRequestBelow(elevator) {
 			return types.ED_Down
 		} else {
 			return types.ED_Stop
 		}
 
 	case types.ED_Up:
-		if isRequestAbove(elevator) {
+		if IsRequestAbove(elevator) {
 			return types.ED_Up
-		} else if isRequestBelow(elevator) {
+		} else if IsRequestBelow(elevator) {
 			return types.ED_Down
 		} else {
 			return types.ED_Stop
 		}
 
 	case types.ED_Down:
-		if isRequestBelow(elevator) {
+		if IsRequestBelow(elevator) {
 			return types.ED_Down
-		} else if isRequestAbove(elevator) {
+		} else if IsRequestAbove(elevator) {
 			return types.ED_Up
 		} else {
 			return types.ED_Stop
@@ -77,7 +77,7 @@ func DirectionConverter(dir types.ElevDirection) types.MotorDirection {
 	return types.MD_Stop
 }
 
-func isRequestAbove(elevator types.ElevInfo) bool {
+func IsRequestAbove(elevator types.ElevInfo) bool {
 	for floor := elevator.Floor + 1; floor < types.N_FLOORS; floor++ {
 		for btn := 0; btn < types.N_BUTTONS; btn++ {
 			if elevator.RequestsQueue[floor][btn] {
@@ -88,7 +88,7 @@ func isRequestAbove(elevator types.ElevInfo) bool {
 	return false
 }
 
-func isRequestBelow(elevator types.ElevInfo) bool {
+func IsRequestBelow(elevator types.ElevInfo) bool {
 	for floor := 0; floor < elevator.Floor; floor++ {
 		for btn := 0; btn < types.N_BUTTONS; btn++ {
 			if elevator.RequestsQueue[floor][btn] {
@@ -99,35 +99,34 @@ func isRequestBelow(elevator types.ElevInfo) bool {
 	return false
 }
 
-
 func clearRequests(elevator types.ElevInfo, floor int) types.ElevInfo {
-    switch elevator.CV {
-    case types.CV_All:
-        for btn := 0; btn < types.N_BUTTONS; btn++ {
-            elevator.RequestsQueue[floor][btn] = false
-        }
-    case types.CV_InDirn:
-        elevator.RequestsQueue[floor][types.BT_Cab] = false
+	switch elevator.CV {
+	case types.CV_All:
+		for btn := 0; btn < types.N_BUTTONS; btn++ {
+			elevator.RequestsQueue[floor][btn] = false
+		}
+	case types.CV_InDirn:
+		elevator.RequestsQueue[floor][types.BT_Cab] = false
 
-        switch elevator.Dir {
-        case types.ED_Up:
-            if !isRequestAbove(elevator) && !elevator.RequestsQueue[floor][types.BT_Up] {
-                elevator.RequestsQueue[floor][types.BT_Down] = false
-            }
-            elevator.RequestsQueue[floor][types.BT_Up] = false
+		switch elevator.Dir {
+		case types.ED_Up:
+			if !IsRequestAbove(elevator) && !elevator.RequestsQueue[floor][types.BT_Up] {
+				elevator.RequestsQueue[floor][types.BT_Down] = false
+			}
+			elevator.RequestsQueue[floor][types.BT_Up] = false
 
-        case types.ED_Down:
-            if !isRequestBelow(elevator) && !elevator.RequestsQueue[floor][types.BT_Down] {
-                elevator.RequestsQueue[floor][types.BT_Up] = false
-            }
-            elevator.RequestsQueue[floor][types.BT_Down] = false
+		case types.ED_Down:
+			if !IsRequestBelow(elevator) && !elevator.RequestsQueue[floor][types.BT_Down] {
+				elevator.RequestsQueue[floor][types.BT_Up] = false
+			}
+			elevator.RequestsQueue[floor][types.BT_Down] = false
 
-        case types.ED_Stop:
-            fallthrough
-        default:
-            elevator.RequestsQueue[floor][types.BT_Up] = false
-            elevator.RequestsQueue[floor][types.BT_Down] = false
-        }
-    }
-    return elevator
+		case types.ED_Stop:
+			fallthrough
+		default:
+			elevator.RequestsQueue[floor][types.BT_Up] = false
+			elevator.RequestsQueue[floor][types.BT_Down] = false
+		}
+	}
+	return elevator
 }
