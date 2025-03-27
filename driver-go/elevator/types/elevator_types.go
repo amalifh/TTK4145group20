@@ -8,28 +8,27 @@ Constants:
 - N_BUTTONS: The number of buttons per floor (Up, Down, and Cab).
 
 Types:
-- ElevDirection: Enum representing elevator movement directions (Up, Down, Stop).
-- ElevBehaviour: Enum representing different operational states of the elevator (Idle, Moving, DoorOpen, Undefined).
-- ClearRequestVariant: Enum specifying how requests should be cleared when the elevator stops.
-- ElevInfo: Struct containing the state of an elevator, including its behavior, direction, current floor,
-  request queue, and request clearing policy.
-
-These definitions form the foundation for controlling and managing the elevator system.
+  - ElevDirection: Enum representing elevator movement directions (Up, Down, Stop).
+  - ElevBehaviour: Enum representing different operational states of the elevator (Idle, Moving, DoorOpen, Undefined).
+  - ClearRequestVariant: Enum specifying how requests should be cleared when the elevator stops.
+  - ElevInfo: Struct containing the state of an elevator, including its behavior, direction, current floor,
+    request queue, and request clearing policy.
 */
 package types
 
 const (
-	N_FLOORS    = 4
-	N_ELEVATORS = 3
-	N_BUTTONS   = 3
+	N_FLOORS       = 4
+	N_ELEVATORS    = 3
+	N_BUTTONS      = 3
+	N_HALL_BUTTONS = 4
 )
 
 type ElevDirection int
 
 const (
-	ED_Down ElevDirection = iota - 1 
-	ED_Stop                          
-	ED_Up                            
+	ED_Down ElevDirection = iota - 1
+	ED_Stop
+	ED_Up
 )
 
 type ElevBehaviour int
@@ -41,17 +40,19 @@ const (
 	EB_DoorOpen
 )
 
+/*
 type ClearRequestVariant int
 
 const (
-	CV_All    ClearRequestVariant = iota 
-	CV_InDirn                           
+	CV_All ClearRequestVariant = iota
+	CV_InDirn
 )
+*/
 
 type ElevInfo struct {
 	State         ElevBehaviour
 	Dir           ElevDirection
 	Floor         int
 	RequestsQueue [N_FLOORS][N_BUTTONS]bool
-	CV            ClearRequestVariant
+	//CV            ClearRequestVariant
 }

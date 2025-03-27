@@ -1,4 +1,22 @@
-// Credits: https://github.com/TTK4145/driver-go
+/*
+This package handles the direct interaction with the elevator hardware via a TCP connection,
+ensuring thread-safe access to the hardware resources using a mutex.
+
+Key Functions:
+  - Init: Establishes a TCP connection to the elevator server, initializes global variables,
+    and sets up the hardware interface.
+  - SetMotorDirection, SetButtonLamp, SetFloorIndicator, SetDoorOpenLamp, SetStopLamp:
+    Send commands to control various elevator components such as the motor, button lamps,
+    and indicators.
+  - PollButtons, PollFloorSensor, PollStopButton, PollObstructionSwitch: Continuously poll
+    the hardware for changes and send events through designated channels.
+  - GetButton, GetFloor, GetStop, GetObstruction: Read the current state of specific hardware
+    inputs and convert raw data to usable boolean or integer values.
+  - read, write: Provide low-level, thread-safe I/O operations to communicate with the hardware.
+  - toByte, toBool: Utility functions to convert between boolean values and byte representations.
+
+Credits: https:github.com/TTK4145/driver-go
+*/
 package driver
 
 import (
@@ -9,175 +27,155 @@ import (
 	"time"
 )
 
-// Constants
-const _pollRate = 25 * time.Millisecond // Polling rate for checking inputs from the hardware
+const _pollRate = 25 * time.Millisecond
 
-// Global variables
-var _initialized bool = false   // Flag to check if the driver has been initialized
-var _numFloors = types.N_FLOORS // Number of floors in the elevator
-var _mtx sync.Mutex             // Mutex for thread safety in the driver functions
-var _conn net.Conn              // TCP connection to the elevator server
+var _initialized bool = false
+var _numFloors = types.N_FLOORS
+var _mtx sync.Mutex
+var _conn net.Conn
 
-// Init initializes the driver by establishing a connection to the elevator hardware
-// It takes an address for the server and the number of floors as parameters
 func Init(addr string, numFloors int) {
 	if _initialized {
 		fmt.Println("Driver already initialized!")
 		return
 	}
-	_numFloors = numFloors // Set number of floors in the elevator
-	_mtx = sync.Mutex{}    // Initialize mutex for thread-safety
+	_numFloors = numFloors
+	_mtx = sync.Mutex{}
 	var err error
-	_conn, err = net.Dial("tcp", addr) // Establish connection to the elevator server
+	_conn, err = net.Dial("tcp", addr)
 	if err != nil {
-		panic(err.Error()) // Panic if there is an error in connection
+		panic(err.Error())
 	}
-	_initialized = true // Mark the driver as initialized
+	_initialized = true
 }
 
-// SetMotorDirection sends a command to set the motor direction (up, down, or stop)
 func SetMotorDirection(dir types.MotorDirection) {
-	write([4]byte{1, byte(dir), 0, 0}) // Send motor direction command to the elevator hardware
+	write([4]byte{1, byte(dir), 0, 0})
 }
 
-// SetButtonLamp controls the button lamps (lights that indicate button presses)
 func SetButtonLamp(button types.ButtonType, floor int, value bool) {
-	write([4]byte{2, byte(button), byte(floor), toByte(value)}) // Send button lamp state (on/off) to the hardware
+	write([4]byte{2, byte(button), byte(floor), toByte(value)})
 }
 
-// SetFloorIndicator sets the floor indicator to show the current floor
 func SetFloorIndicator(floor int) {
-	write([4]byte{3, byte(floor), 0, 0}) // Update the floor indicator
+	write([4]byte{3, byte(floor), 0, 0})
 }
 
-// SetDoorOpenLamp controls the door open lamp (light indicating whether the door is open)
 func SetDoorOpenLamp(value bool) {
-	write([4]byte{4, toByte(value), 0, 0}) // Set the door open lamp (on/off)
+	write([4]byte{4, toByte(value), 0, 0})
 }
 
-// SetStopLamp controls the stop lamp (indicates whether the stop button is pressed)
 func SetStopLamp(value bool) {
-	write([4]byte{5, toByte(value), 0, 0}) // Set the stop lamp (on/off)
+	write([4]byte{5, toByte(value), 0, 0})
 }
 
-// PollButtons checks for button presses and sends events to the receiver channel
 func PollButtons(receiver chan<- types.ButtonEvent) {
-	prev := make([][3]bool, _numFloors) // Array to store previous button states
+	prev := make([][3]bool, _numFloors)
 	for {
-		time.Sleep(_pollRate) // Poll every 25ms
+		time.Sleep(_pollRate)
 		for f := 0; f < _numFloors; f++ {
 			for b := types.ButtonType(0); b < 3; b++ {
-				v := GetButton(b, f)      // Get current state of the button
-				if v != prev[f][b] && v { // If state changes and button is pressed
+				v := GetButton(b, f)
+				if v != prev[f][b] && v {
 					receiver <- types.ButtonEvent{
-						Floor:  f,
-						Btn: types.ButtonType(b),
-					} // Send event to receiver channel
+						Floor: f,
+						Btn:   types.ButtonType(b),
+					}
 				}
-				prev[f][b] = v // Update the previous state of the button
+				prev[f][b] = v
 			}
 		}
 	}
 }
 
-// PollFloorSensor monitors the floor sensor and sends updates to the receiver channel
 func PollFloorSensor(receiver chan<- int) {
-	prev := -1 // Initialize the previous floor sensor value
+	prev := -1
 	for {
-		time.Sleep(_pollRate)     // Poll every 25ms
-		v := GetFloor()           // Get the current floor
-		if v != prev && v != -1 { // If the floor changes and is not invalid (-1)
-			receiver <- v // Send the new floor to the receiver channel
+		time.Sleep(_pollRate)
+		v := GetFloor()
+		if v != prev && v != -1 {
+			receiver <- v
 		}
-		prev = v // Update the previous floor sensor value
+		prev = v
 	}
 }
 
-// PollStopButton checks for the stop button press and sends events to the receiver channel
 func PollStopButton(receiver chan<- bool) {
-	prev := false // Initialize the previous state of the stop button
+	prev := false
 	for {
-		time.Sleep(_pollRate) // Poll every 25ms
-		v := GetStop()        // Get the state of the stop button
-		if v != prev {        // If the state changes
-			receiver <- v // Send the new stop button state to the receiver channel
+		time.Sleep(_pollRate)
+		v := GetStop()
+		if v != prev {
+			receiver <- v
 		}
-		prev = v // Update the previous state of the stop button
+		prev = v
 	}
 }
 
-// PollObstructionSwitch checks for an obstruction and sends events to the receiver channel
 func PollObstructionSwitch(receiver chan<- bool) {
-	prev := false // Initialize the previous state of the obstruction switch
+	prev := false
 	for {
-		time.Sleep(_pollRate) // Poll every 25ms
-		v := GetObstruction() // Get the current state of the obstruction switch
-		if v != prev {        // If the state changes
-			receiver <- v // Send the new obstruction state to the receiver channel
+		time.Sleep(_pollRate)
+		v := GetObstruction()
+		if v != prev {
+			receiver <- v
 		}
-		prev = v // Update the previous state of the obstruction switch
+		prev = v
 	}
 }
 
-// GetButton checks the current state of a specific button (floor and button type)
 func GetButton(button types.ButtonType, floor int) bool {
-	a := read([4]byte{6, byte(button), byte(floor), 0}) // Read the button state from the hardware
-	return toBool(a[1])                                 // Convert the byte value to a boolean (pressed or not)
+	a := read([4]byte{6, byte(button), byte(floor), 0})
+	return toBool(a[1])
 }
 
-// GetFloor reads the current floor from the floor sensor
 func GetFloor() int {
-	a := read([4]byte{7, 0, 0, 0}) // Read the floor sensor state
+	a := read([4]byte{7, 0, 0, 0})
 	if a[1] != 0 {
-		return int(a[2]) // Return the floor number if valid
+		return int(a[2])
 	} else {
-		return -1 // Return -1 if no valid floor is detected
+		return -1
 	}
 }
 
-// GetStop checks the state of the stop button (pressed or not)
 func GetStop() bool {
-	a := read([4]byte{8, 0, 0, 0}) // Read the stop button state
-	return toBool(a[1])            // Convert the byte value to a boolean (pressed or not)
+	a := read([4]byte{8, 0, 0, 0})
+	return toBool(a[1])
 }
 
-// GetObstruction checks the state of the obstruction switch (blocked or not)
 func GetObstruction() bool {
-	a := read([4]byte{9, 0, 0, 0}) // Read the obstruction switch state
-	return toBool(a[1])            // Convert the byte value to a boolean (blocked or not)
+	a := read([4]byte{9, 0, 0, 0})
+	return toBool(a[1])
 }
 
-// read sends a request to the hardware and reads the response
 func read(in [4]byte) [4]byte {
-	_mtx.Lock()         // Lock mutex to ensure thread safety
-	defer _mtx.Unlock() // Unlock mutex when the function exits
+	_mtx.Lock()
+	defer _mtx.Unlock()
 
-	_, err := _conn.Write(in[:]) // Send request to the hardware
+	_, err := _conn.Write(in[:])
 	if err != nil {
-		panic("Lost connection to Elevator Server") // Panic if there is an error in communication
+		panic("Lost connection to Elevator Server")
 	}
 
 	var out [4]byte
-	_, err = _conn.Read(out[:]) // Read the response from the hardware
+	_, err = _conn.Read(out[:])
 	if err != nil {
-		panic("Lost connection to Elevator Server") // Panic if there is an error in reading response
+		panic("Lost connection to Elevator Server")
 	}
 
-	return out // Return the response data
+	return out
 }
 
-// write sends a command to the elevator hardware
 func write(in [4]byte) {
-	_mtx.Lock()         // Lock mutex to ensure thread safety
-	defer _mtx.Unlock() // Unlock mutex when the function exits
+	_mtx.Lock()
+	defer _mtx.Unlock()
 
-	_, err := _conn.Write(in[:]) // Send command to the hardware
+	_, err := _conn.Write(in[:])
 	if err != nil {
-		panic("Lost connection to Elevator Server") // Panic if there is an error in communication
+		panic("Lost connection to Elevator Server")
 	}
 }
 
-// toByte converts a boolean value to a byte (0 for false, 1 for true)
 func toByte(a bool) byte {
 	var b byte = 0
 	if a {
@@ -186,7 +184,6 @@ func toByte(a bool) byte {
 	return b
 }
 
-// toBool converts a byte value to a boolean (0 for false, non-zero for true)
 func toBool(a byte) bool {
 	var b bool = false
 	if a != 0 {
