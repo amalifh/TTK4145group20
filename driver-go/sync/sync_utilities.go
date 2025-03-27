@@ -142,7 +142,7 @@ func handleRequestUpdate(
 	registeredRequests *[types.N_FLOORS][types.N_BUTTONS - 1]types.AckList,
 	someUpdate *bool,
 ) {
-	if newRequest.Done { //This gets spammed. Where and when is Done set and unset?
+	if newRequest.Done {
 		elevList[id].RequestsQueue[newRequest.Floor] = [types.N_BUTTONS]bool{}
 		*someUpdate = true
 		if newRequest.Btn != types.BT_Cab {

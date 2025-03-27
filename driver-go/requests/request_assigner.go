@@ -53,7 +53,7 @@ func RequestAssigner(
 				if newLocalRequest.Floor == elevList[id].Floor && elevList[id].State != types.EB_Moving {
 					newRequestsCh <- newLocalRequest
 				} else {
-					if !duplicateRequest(newLocalRequest, elevList, id) { //I believe this gets spammed
+					if !duplicateRequest(newLocalRequest, elevList, id) {
 						fmt.Println("New request at floor ", newLocalRequest.Floor, " for button ", newLocalRequest.Btn)
 						newLocalRequest.ChosenElevator = CalcChosenElevator(newLocalRequest, elevList, id, aliveList)
 						updatedRequestsCh <- newLocalRequest
@@ -79,14 +79,9 @@ func RequestAssigner(
 
 					case types.CV_InDirn:
 						if elevator == id {
-							if currentDirn == types.ED_Up && btn == types.BT_Up {
-								elevList[elevator].RequestsQueue[currentFloor][types.BT_Up] = false
-							} else if currentDirn == types.ED_Down && btn == types.BT_Down {
-								elevList[elevator].RequestsQueue[currentFloor][types.BT_Down] = false
-							} else if currentDirn == types.ED_Down && btn == types.BT_Up {
-								elevList[elevator].RequestsQueue[currentFloor][types.BT_Up] = false
-							} else if currentDirn == types.ED_Up && btn == types.BT_Down {
-								elevList[elevator].RequestsQueue[currentFloor][types.BT_Down] = false
+							if (currentDirn == types.ED_Up && btn == types.BT_Up) ||
+								(currentDirn == types.ED_Down && btn == types.BT_Down) {
+								elevList[elevator].RequestsQueue[currentFloor][btn] = false
 							}
 						}
 					}
