@@ -45,7 +45,7 @@ func ElevatorHandler(ch FsmChannels) {
 		Dir:           types.ED_Stop,
 		Floor:         driver.GetFloor(),
 		RequestsQueue: [types.N_FLOORS][types.N_BUTTONS]bool{},
-		CV:            types.CV_InDirn,
+		//CV:            types.CV_InDirn,
 	}
 
 	doorTimer := time.NewTimer(DOOR_OPEN_TIME)
@@ -114,7 +114,7 @@ func ElevatorHandler(ch FsmChannels) {
 				elevator.State = types.EB_DoorOpen
 				driver.SetMotorDirection(types.MD_Stop)
 				doorTimer.Reset(DOOR_OPEN_TIME)
-				elevator = clearRequests(elevator, elevator.Floor)
+				elevator = ClearRequests(elevator, elevator.Floor)
 				go func() { ch.RequestsComplete <- elevator.Floor }()
 			} else if obstructionActive {
 				driver.SetDoorOpenLamp(true)
@@ -128,7 +128,7 @@ func ElevatorHandler(ch FsmChannels) {
 				elevator.State = types.EB_DoorOpen
 				driver.SetMotorDirection(types.MD_Stop)
 				doorTimer.Reset(DOOR_OPEN_TIME)
-				elevator = clearRequests(elevator, elevator.Floor)
+				elevator = ClearRequests(elevator, elevator.Floor)
 				go func() { ch.RequestsComplete <- elevator.Floor }()
 
 			} else if elevator.State == types.EB_Moving {
@@ -149,7 +149,7 @@ func ElevatorHandler(ch FsmChannels) {
 						elevator.State = types.EB_DoorOpen
 						doorTimer.Reset(DOOR_OPEN_TIME)
 						mobilityTimer.Stop()
-						elevator = clearRequests(elevator, elevator.Floor)
+						elevator = ClearRequests(elevator, elevator.Floor)
 						go func() { ch.RequestsComplete <- elevator.Floor }()
 					}
 				} else if elevator.State == types.EB_DoorOpen || elevator.State == types.EB_Idle {

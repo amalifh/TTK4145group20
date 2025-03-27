@@ -144,6 +144,7 @@ func Synchronise(ch SyncChannels, id int) {
 					someUpdate = true
 				}
 			}
+
 			if someUpdate {
 				ch.UpdateReqAssigner <- elevList
 				someUpdate = false

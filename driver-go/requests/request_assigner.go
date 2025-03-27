@@ -6,11 +6,11 @@ updating request queues, and ensuring proper synchronization between elevators. 
 lamp states to reflect the current status of requests.
 
 Functions:
-- RequestAssigner: Listens for button press events, assigns requests to the most suitable elevator, updates request queues, 
-  and communicates status changes to other elevators.
-- LightsUpdater: Monitors request queues and updates the corresponding button lamps to indicate active requests.
+  - RequestAssigner: Listens for button press events, assigns requests to the most suitable elevator, updates request queues,
+    and communicates status changes to other elevators.
+  - LightsUpdater: Monitors request queues and updates the corresponding button lamps to indicate active requests.
 
-The package operates using multiple channels for inter-module communication, ensuring a distributed approach to request 
+The package operates using multiple channels for inter-module communication, ensuring a distributed approach to request
 handling and elevator coordination.
 
 Credits: https://github.com/perkjelsvik/TTK4145-sanntid
@@ -18,6 +18,7 @@ Credits: https://github.com/perkjelsvik/TTK4145-sanntid
 package requests
 
 import (
+	"Driver-go/controller"
 	"Driver-go/elevator/driver"
 	"Driver-go/elevator/types"
 	"fmt"
@@ -25,7 +26,7 @@ import (
 
 func RequestAssigner(
 	id int,
-	bPressedCh chan types.ButtonEvent, 
+	bPressedCh chan types.ButtonEvent,
 	lUpdateCh chan [types.N_ELEVATORS]types.ElevInfo,
 	completedRequestsCh chan int,
 	newRequestsCh chan types.ButtonEvent,
@@ -128,27 +129,43 @@ func RequestAssigner(
 	}
 }
 
-func LightsUpdater(lUpdateCh <-chan [types.N_ELEVATORS]types.ElevInfo, id int) {
-	var RequestExists [types.N_ELEVATORS]bool
+// applyClearRequests applies clearRequests to every elevator for a given floor.
+func applyClearRequests(elevs [types.N_ELEVATORS]types.ElevInfo, floor int) [types.N_ELEVATORS]types.ElevInfo {
+	for i, elev := range elevs {
+		elevs[i] = controller.ClearRequests(elev, floor)
+	}
+	return elevs
+}
 
+// updateLampsForFloor checks all elevators for a given floor and updates the corresponding lamps.
+func updateLampsForFloor(elevs [types.N_ELEVATORS]types.ElevInfo, floor, id int) {
+	// Iterate over each button for the given floor.
+	for btn := types.BT_Up; btn < types.N_BUTTONS; btn++ {
+		lampOn := false
+		// Loop over every elevator.
+		for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
+			// For non-local elevators, skip the cab button.
+			if elevator != id && btn == types.BT_Cab {
+				continue
+			}
+			if elevs[elevator].RequestsQueue[floor][btn] {
+				lampOn = true
+				break
+			}
+		}
+		driver.SetButtonLamp(btn, floor, lampOn)
+	}
+}
+
+// LightsUpdater listens for updates, applies clearRequests, then updates button lamps accordingly.
+func LightsUpdater(lUpdateCh <-chan [types.N_ELEVATORS]types.ElevInfo, id int) {
 	for {
 		elevs := <-lUpdateCh
+		// For each floor, update the request states using clearRequests,
+		// then update the button lamps based on the new state.
 		for floor := 0; floor < types.N_FLOORS; floor++ {
-			for btn := types.BT_Up; btn < types.N_BUTTONS; btn++ {
-				for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
-					RequestExists[elevator] = false
-					if elevator != id && btn == types.BT_Cab {
-						continue
-					}
-					if elevs[elevator].RequestsQueue[floor][btn] {
-						driver.SetButtonLamp(btn, floor, true)
-						RequestExists[elevator] = true
-					}
-				}
-				if RequestExists == [types.N_ELEVATORS]bool{} {
-					driver.SetButtonLamp(btn, floor, false)
-				}
-			}
+			elevs = applyClearRequests(elevs, floor)
+			updateLampsForFloor(elevs, floor, id)
 		}
 	}
 }

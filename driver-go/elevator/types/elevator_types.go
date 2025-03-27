@@ -40,19 +40,17 @@ const (
 	EB_DoorOpen
 )
 
-/*
 type ClearRequestVariant int
 
 const (
 	CV_All ClearRequestVariant = iota
 	CV_InDirn
 )
-*/
 
 type ElevInfo struct {
 	State         ElevBehaviour
 	Dir           ElevDirection
 	Floor         int
 	RequestsQueue [N_FLOORS][N_BUTTONS]bool
-	//CV            ClearRequestVariant
+	CV            ClearRequestVariant
 }

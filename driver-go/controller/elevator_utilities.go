@@ -17,6 +17,28 @@ import (
 	"Driver-go/elevator/types"
 )
 
+func isRequestAbove(elevator types.ElevInfo) bool {
+	for floor := elevator.Floor + 1; floor < types.N_FLOORS; floor++ {
+		for btn := 0; btn < types.N_BUTTONS; btn++ {
+			if elevator.RequestsQueue[floor][btn] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isRequestBelow(elevator types.ElevInfo) bool {
+	for floor := 0; floor < elevator.Floor; floor++ {
+		for btn := 0; btn < types.N_BUTTONS; btn++ {
+			if elevator.RequestsQueue[floor][btn] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func shouldStop(elevator types.ElevInfo) bool {
 	switch elevator.Dir {
 	case types.ED_Up:
@@ -77,28 +99,6 @@ func DirectionConverter(dir types.ElevDirection) types.MotorDirection {
 	return types.MD_Stop
 }
 
-func isRequestAbove(elevator types.ElevInfo) bool {
-	for floor := elevator.Floor + 1; floor < types.N_FLOORS; floor++ {
-		for btn := 0; btn < types.N_BUTTONS; btn++ {
-			if elevator.RequestsQueue[floor][btn] {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func isRequestBelow(elevator types.ElevInfo) bool {
-	for floor := 0; floor < elevator.Floor; floor++ {
-		for btn := 0; btn < types.N_BUTTONS; btn++ {
-			if elevator.RequestsQueue[floor][btn] {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 func toClearHallDown(elevator types.ElevInfo) bool {
 	if !elevator.RequestsQueue[elevator.Floor][types.BT_Down] {
 		return false
@@ -129,7 +129,7 @@ func toClearCab(elevator types.ElevInfo) bool {
 	return elevator.RequestsQueue[elevator.Floor][types.BT_Cab]
 }
 
-func clearRequests(elevator types.ElevInfo, floor int) types.ElevInfo {
+func ClearRequests(elevator types.ElevInfo, floor int) types.ElevInfo {
 	switch elevator.CV {
 	case types.CV_InDirn:
 		// Clear the cab request if the helper indicates it should be cleared.
