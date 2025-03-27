@@ -68,34 +68,22 @@ func RequestAssigner(
 			clearVariant := elevList[id].CV
 
 			for btn := types.BT_Up; btn <= types.BT_Down; btn++ {
-				for elevator := 0; elevator < types.N_ELEVATORS; elevator++ {
-					if elevator >= len(elevList) {
-						continue
-					}
-
-					switch clearVariant {
-					case types.CV_All:
-						elevList[elevator].RequestsQueue[currentFloor][btn] = false
-
-					case types.CV_InDirn:
-						if elevator == id {
-							if (currentDirn == types.ED_Up && btn == types.BT_Up) ||
-								(currentDirn == types.ED_Down && btn == types.BT_Down) {
-								elevList[elevator].RequestsQueue[currentFloor][btn] = false
-							}
-						}
+				switch clearVariant {
+				case types.CV_All:
+					elevList[id].RequestsQueue[currentFloor][btn] = false
+				case types.CV_InDirn:
+					if (currentDirn == types.ED_Up && btn == types.BT_Up) ||
+						(currentDirn == types.ED_Down && btn == types.BT_Down) {
+						elevList[id].RequestsQueue[currentFloor][btn] = false
 					}
 				}
 			}
 
-			if clearVariant == types.CV_All || (clearVariant == types.CV_InDirn && id == completedRequests.ChosenElevator) {
-				elevList[id].RequestsQueue[currentFloor][types.BT_Cab] = false
-			}
+			elevList[id].RequestsQueue[currentFloor][types.BT_Cab] = false
 
 			if aliveList[id] {
 				updatedRequestsCh <- completedRequests
 			}
-
 			lUpdateCh <- elevList
 
 		case newElev := <-elevatorsCh:

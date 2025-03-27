@@ -12,11 +12,14 @@ Credits: https://github.com/perkjelsvik/TTK4145-sanntid
 package sync
 
 import (
+	"sync"
 	"time"
 
 	"Driver-go/elevator/types"
 	"Driver-go/network/peers"
 )
+
+var elevListMutex sync.Mutex
 
 type SyncChannels struct {
 	UpdateReqAssigner chan [types.N_ELEVATORS]types.ElevInfo
@@ -85,7 +88,9 @@ func Synchronise(ch SyncChannels, id int) {
 				&timers.singleMode, elevList, ch.AliveElevators, &timers)
 
 		case <-timers.reassign.C:
+			elevListMutex.Lock()
 			handleRequestReassignment(&elevList, &recentlyDied, id, ch.UpdateReqAssigner)
+			elevListMutex.Unlock()
 		}
 	}
 }

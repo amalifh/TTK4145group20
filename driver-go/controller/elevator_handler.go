@@ -67,13 +67,7 @@ func ElevatorHandler(ch FsmChannels) {
 	for {
 		select {
 		case newRequest := <-ch.NewRequest:
-			if newRequest.Done {
-				elevator.RequestsQueue[newRequest.Floor][types.BT_Up] = false
-				elevator.RequestsQueue[newRequest.Floor][types.BT_Down] = false
-				requestCleared = true
-			} else {
-				elevator.RequestsQueue[newRequest.Floor][newRequest.Btn] = true
-			}
+			elevator.RequestsQueue[newRequest.Floor][newRequest.Btn] = true
 
 			switch elevator.State {
 			case types.EB_Idle:
