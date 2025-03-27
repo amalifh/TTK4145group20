@@ -1,14 +1,29 @@
 /*
+/*
 Package sync provides functions for managing synchronization and acknowledgment of elevator requests in a distributed elevator system.
 
 This package includes:
-- `copyAckList`: Copies acknowledgment data from a network message to the local registered orders, ensuring consistency across elevators.
-- `checkAllAckStatus`: Verifies whether all active elevators have a specific acknowledgment status for a given request.
+	- `copyAckList`: Copies acknowledgment data from a network message to the local registered orders, ensuring consistency across elevators.
+	- `checkAllAckStatus`: Verifies whether all active elevators have a specific acknowledgment status for a given request.
+	- `initializeSync`: Initializes synchronization by receiving elevator and request data or timing out if no data is received.
+	- `handleOfflineState`: Manages the elevator's behavior when it detects an offline state, attempting to reinitialize and recover.
+	- `handleElevatorDeath`: Handles the death event of an elevator, logging the event and marking the elevator as dead.
+	- `handleElevatorUpdate`: Updates the local elevator state with new information from the network, preserving the request queue.
+	- `handleRequestUpdate`: Updates the elevator's request queue and acknowledgment status based on incoming request events.
+	- `processIncomingMessage`: Processes incoming network messages, updating elevator states and request acknowledgments.
+	- `handleSingleModeOperations`: Manages elevator operations in single-mode, ensuring requests are handled correctly when only one elevator is active.
+	- `broadcastState`: Broadcasts the elevator's current state and request information to the network.
+	- `handlePeerUpdate`: Handles updates to the peer list, managing elevator online/offline status and triggering request reassignment.
+	- `handleRequestReassignment`: Reassigns requests from a dead elevator to the most suitable alive elevator.
+	- `handleNotAck`: Handles the NOTACK acknowledgment status, updating the registered requests accordingly.
+	- `handleAck`: Handles the ACK acknowledgment status, updating the registered requests and elevator's request queue.
+	- `handleCompleted`: Handles the COMPLETED acknowledgment status, updating the registered requests and elevator's request queue upon request completion.
 
-These functions help maintain synchronization between elevators by tracking implicit acknowledgments and ensuring correct request assignments.
+These functions help maintain synchronization between elevators by tracking implicit acknowledgments, managing peer updates, and ensuring correct request assignments in a distributed environment.
 
 Credits: https://github.com/perkjelsvik/TTK4145-sanntid
 */
+
 package sync
 
 import (
@@ -246,7 +261,12 @@ func handlePeerUpdate(
 	singleModeTicker **time.Ticker,
 	elevList [types.N_ELEVATORS]types.ElevInfo,
 	aliveChan chan<- [types.N_ELEVATORS]bool,
-	reassignTimer *time.Timer,
+	timers *struct {
+		reassign   *time.Timer
+		broadcast  *time.Ticker
+		singleMode *time.Ticker
+		reInit     *time.Timer
+	},
 ) int {
 	fmt.Printf("Peer update:\n Peers: %q\n New: %q\n Lost: %q\n", p.Peers, p.New, p.Lost)
 	lostID := -1
@@ -267,7 +287,7 @@ func handlePeerUpdate(
 		lostID, _ = strconv.Atoi(p.Lost[0])
 		aliveList[lostID] = false
 		if elevList[lostID].RequestsQueue != [types.N_FLOORS][types.N_BUTTONS]bool{} && !recentlyDied[lostID] {
-			reassignTimer.Reset(5 * time.Second)
+			timers.reassign.Reset(1 * time.Second)
 		}
 	}
 
@@ -287,7 +307,6 @@ func handleRequestReassignment(
 			continue
 		}
 
-		// Capture original alive state before modifying
 		originalAlive := [types.N_ELEVATORS]bool{}
 		for e := 0; e < types.N_ELEVATORS; e++ {
 			originalAlive[e] = !recentlyDied[e]
@@ -307,7 +326,7 @@ func handleRequestReassignment(
 						request,
 						*elevList,
 						id,
-						originalAlive, // Use captured pre-modification state
+						originalAlive,
 					)
 
 					elevList[bestElev].RequestsQueue[floor][btn] = true
