@@ -143,12 +143,12 @@ func handleRequestUpdate(
 	someUpdate *bool,
 ) {
 	if newRequest.Done {
-		elevList[id].RequestsQueue[newRequest.Floor][newRequest.Btn] = false
+		elevList[id].RequestsQueue[newRequest.Floor] = [types.N_BUTTONS]bool{}
 		*someUpdate = true
-
 		if newRequest.Btn != types.BT_Cab {
-			registeredRequests[newRequest.Floor][newRequest.Btn].ImplicitAcks[id] = types.COMPLETED
-			fmt.Printf("Completed Request %v at floor %d\n", newRequest.Btn, newRequest.Floor)
+			registeredRequests[newRequest.Floor][types.BT_Up].ImplicitAcks[id] = types.COMPLETED
+			registeredRequests[newRequest.Floor][types.BT_Down].ImplicitAcks[id] = types.COMPLETED
+			fmt.Printf("Completed Request at floor %d\n", newRequest.Floor)
 		}
 	} else {
 		if newRequest.Btn == types.BT_Cab {
@@ -157,8 +157,7 @@ func handleRequestUpdate(
 		} else {
 			registeredRequests[newRequest.Floor][newRequest.Btn].ChosenElevator = newRequest.ChosenElevator
 			registeredRequests[newRequest.Floor][newRequest.Btn].ImplicitAcks[id] = types.ACK
-			fmt.Printf("New Request ACK %v at floor %d\n\tDesignated to %d\n",
-				newRequest.Btn, newRequest.Floor, newRequest.ChosenElevator)
+			fmt.Printf("New Request ACK at floor %d\n\tDesignated to %d\n", newRequest.Floor, newRequest.ChosenElevator)
 		}
 	}
 }
@@ -176,9 +175,10 @@ func processIncomingMessage(
 		return
 	}
 
-	// Update ONLY the sender's elevator state (preserve local state)
-	if msg.Elevator[msg.ID] != elevList[msg.ID] {
-		elevList[msg.ID] = msg.Elevator[msg.ID] // Targeted update
+	if msg.Elevator != *elevList {
+		tmpElevator := elevList[id]
+		*elevList = msg.Elevator
+		elevList[id] = tmpElevator
 		*someUpdate = true
 	}
 

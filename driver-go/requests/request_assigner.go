@@ -54,7 +54,7 @@ func RequestAssigner(
 					newRequestsCh <- newLocalRequest
 				} else {
 					if !duplicateRequest(newLocalRequest, elevList, id) {
-						fmt.Println("New request at floor ", newLocalRequest.Floor, " for button ", newLocalRequest.Btn)
+						fmt.Println("New request at floor ", newLocalRequest.Floor)
 						newLocalRequest.ChosenElevator = CalcChosenElevator(newLocalRequest, elevList, id, aliveList)
 						updatedRequestsCh <- newLocalRequest
 					}
@@ -64,19 +64,9 @@ func RequestAssigner(
 		case completedRequests.Floor = <-completedRequestsCh:
 			completedRequests.Done = true
 			currentFloor := completedRequests.Floor
-			currentDirn := elevList[id].Dir
-			clearVariant := elevList[id].CV
 
 			for btn := types.BT_Up; btn <= types.BT_Down; btn++ {
-				switch clearVariant {
-				case types.CV_All:
-					elevList[id].RequestsQueue[currentFloor][btn] = false
-				case types.CV_InDirn:
-					if (currentDirn == types.ED_Up && btn == types.BT_Up) ||
-						(currentDirn == types.ED_Down && btn == types.BT_Down) {
-						elevList[id].RequestsQueue[currentFloor][btn] = false
-					}
-				}
+				elevList[id].RequestsQueue[currentFloor][btn] = false
 			}
 
 			elevList[id].RequestsQueue[currentFloor][types.BT_Cab] = false
@@ -138,7 +128,6 @@ func RequestAssigner(
 func LightsUpdater(lUpdateCh <-chan [types.N_ELEVATORS]types.ElevInfo, id int) {
 	for elevs := range lUpdateCh {
 		for floor := 0; floor < types.N_FLOORS; floor++ {
-			// Handle hall buttons (Up and Down)
 			for btn := types.BT_Up; btn <= types.BT_Down; btn++ {
 				hasRequest := false
 				for _, elev := range elevs {
@@ -150,7 +139,6 @@ func LightsUpdater(lUpdateCh <-chan [types.N_ELEVATORS]types.ElevInfo, id int) {
 				driver.SetButtonLamp(btn, floor, hasRequest)
 			}
 
-			// Handle cab button (only for this elevator)
 			cabRequest := elevs[id].RequestsQueue[floor][types.BT_Cab]
 			driver.SetButtonLamp(types.BT_Cab, floor, cabRequest)
 		}

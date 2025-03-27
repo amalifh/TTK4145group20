@@ -39,13 +39,11 @@ type FsmChannels struct {
 }
 
 func ElevatorHandler(ch FsmChannels) {
-	// Change it with a config file
 	elevator := types.ElevInfo{
 		State:         types.EB_Idle,
 		Dir:           types.ED_Stop,
 		Floor:         driver.GetFloor(),
 		RequestsQueue: [types.N_FLOORS][types.N_BUTTONS]bool{},
-		CV:            types.CV_InDirn,
 	}
 
 	doorTimer := time.NewTimer(DOOR_OPEN_TIME)
@@ -147,7 +145,6 @@ func ElevatorHandler(ch FsmChannels) {
 						go func() { ch.RequestsComplete <- elevator.Floor }()
 					}
 				} else if elevator.State == types.EB_DoorOpen || elevator.State == types.EB_Idle {
-					// Already stopped with doors open; ensure door remains open.
 					if elevator.State == types.EB_Idle {
 						elevator.State = types.EB_DoorOpen
 					}
@@ -193,7 +190,6 @@ func ElevatorHandler(ch FsmChannels) {
 			driver.SetMotorDirection(types.MD_Stop)
 			elevator.State = types.EB_Undefined
 			fmt.Println("\x1b[1;1;33m", "Engine Error - Go offline", "\x1b[0m")
-			// Deleted blinking light
 			driver.SetMotorDirection(DirectionConverter(elevator.Dir))
 			ch.Elevator <- elevator
 			mobilityTimer.Reset(MOBILITY_TIMEOUT)

@@ -70,8 +70,8 @@ func PollButtons(receiver chan<- types.ButtonEvent) {
 				v := GetButton(b, f)      // Get current state of the button
 				if v != prev[f][b] && v { // If state changes and button is pressed
 					receiver <- types.ButtonEvent{
-						Floor:  f,
-						Btn: types.ButtonType(b),
+						Floor: f,
+						Btn:   b,
 					} // Send event to receiver channel
 				}
 				prev[f][b] = v // Update the previous state of the button
