@@ -99,39 +99,57 @@ func isRequestBelow(elevator types.ElevInfo) bool {
 	return false
 }
 
-//making functions to deal with the lights?
-/*
-func clearHallDown(elevator types.ElevInfo) bool {
+func toClearHallDown(elevator types.ElevInfo) bool {
+	if !elevator.RequestsQueue[elevator.Floor][types.BT_Down] {
+		return false
+	}
+	switch elevator.Dir {
+	case types.ED_Down, types.ED_Stop:
+		return true
+	case types.ED_Up:
+		return !isRequestBelow(elevator) && !elevator.RequestsQueue[elevator.Floor][types.BT_Up]
+	}
+	return false
+}
 
-}*/
+func toClearHallUp(elevator types.ElevInfo) bool {
+	if !elevator.RequestsQueue[elevator.Floor][types.BT_Cab] {
+		return false
+	}
+	switch elevator.Dir {
+	case types.ED_Up, types.ED_Stop:
+		return true
+	case types.ED_Down:
+		return !isRequestAbove(elevator) && !elevator.RequestsQueue[elevator.Floor][types.BT_Down]
+	}
+	return false
+}
+
+func toClearCab(elevator types.ElevInfo) bool {
+	return elevator.RequestsQueue[elevator.Floor][types.BT_Cab]
+}
 
 func clearRequests(elevator types.ElevInfo, floor int) types.ElevInfo {
 	switch elevator.CV {
+	case types.CV_InDirn:
+		// Clear the cab request if the helper indicates it should be cleared.
+		if toClearCab(elevator) {
+			elevator.RequestsQueue[floor][types.BT_Cab] = false
+		}
+
+		// Clear the hall up request if indicated.
+		if toClearHallUp(elevator) {
+			elevator.RequestsQueue[floor][types.BT_Up] = false
+		}
+
+		// Clear the hall down request if indicated.
+		if toClearHallDown(elevator) {
+			elevator.RequestsQueue[floor][types.BT_Down] = false
+		}
 	case types.CV_All:
+		// Clear all button requests unconditionally.
 		for btn := 0; btn < types.N_BUTTONS; btn++ {
 			elevator.RequestsQueue[floor][btn] = false
-		}
-	case types.CV_InDirn:
-		elevator.RequestsQueue[floor][types.BT_Cab] = false
-
-		switch elevator.Dir {
-		case types.ED_Up:
-			if !isRequestAbove(elevator) && !elevator.RequestsQueue[floor][types.BT_Up] {
-				elevator.RequestsQueue[floor][types.BT_Down] = false
-			}
-			elevator.RequestsQueue[floor][types.BT_Up] = false
-
-		case types.ED_Down:
-			if !isRequestBelow(elevator) && !elevator.RequestsQueue[floor][types.BT_Down] {
-				elevator.RequestsQueue[floor][types.BT_Up] = false
-			}
-			elevator.RequestsQueue[floor][types.BT_Down] = false
-
-		case types.ED_Stop:
-			fallthrough
-		default:
-			elevator.RequestsQueue[floor][types.BT_Up] = false
-			elevator.RequestsQueue[floor][types.BT_Down] = false
 		}
 	}
 	return elevator
