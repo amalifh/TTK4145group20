@@ -82,7 +82,7 @@ func Synchronise(ch SyncChannels, id int) {
 
 		case peerUpdate := <-ch.PeerUpdate:
 			lostID = handlePeerUpdate(peerUpdate, &aliveList, &recentlyDied, &offline,
-				&timers.singleMode, elevList, ch.AliveElevators)
+				&timers.singleMode, elevList, ch.AliveElevators, timers.reassign)
 
 		case <-timers.reassign.C:
 			handleRequestReassignment(&elevList, &recentlyDied, id, ch.UpdateReqAssigner)

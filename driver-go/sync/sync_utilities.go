@@ -246,6 +246,7 @@ func handlePeerUpdate(
 	singleModeTicker **time.Ticker,
 	elevList [types.N_ELEVATORS]types.ElevInfo,
 	aliveChan chan<- [types.N_ELEVATORS]bool,
+	reassignTimer *time.Timer,
 ) int {
 	fmt.Printf("Peer update:\n Peers: %q\n New: %q\n Lost: %q\n", p.Peers, p.New, p.Lost)
 	lostID := -1
@@ -266,7 +267,7 @@ func handlePeerUpdate(
 		lostID, _ = strconv.Atoi(p.Lost[0])
 		aliveList[lostID] = false
 		if elevList[lostID].RequestsQueue != [types.N_FLOORS][types.N_BUTTONS]bool{} && !recentlyDied[lostID] {
-			// This would need access to reassignTimer, consider adding to timers struct
+			reassignTimer.Reset(5 * time.Second)
 		}
 	}
 
